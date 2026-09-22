@@ -46,9 +46,9 @@ git push origin main
 2. **Build → Firestore Database → Create database** (בחרו אזור, למשל `europe-west1`).
 3. **Project settings (גלגל) → Your apps → Web (`</>`)** — רשמו שם לאפליקציה וקבלו את אובייקט `firebaseConfig`.
 4. העתיקו את הערכים לקובץ `.env` מקומי (ראו `.env.example`) **או** ישירות ל-Vercel (ראו למטה).
-5. **Firestore Rules** — העתיקו את התוכן מקובץ [`firestore.rules`](./firestore.rules) ל-Firebase Console → Firestore → **Rules** → **Publish**.
-
+5. **Authentication → Sign-in method** — הפעילו **Google** כספק התחברות.
 6. **Authentication → Settings → Authorized domains** — הוסיפו את דומיין ה-Vercel (למשל `your-app.vercel.app`) אחרי הפריסה.
+7. **Firestore Rules** — ערכו את רשימת המיילים ב-`isAdmin()` בקובץ [`firestore.rules`](./firestore.rules), העתיקו ל-Firebase Console → Firestore → **Rules** → **Publish** (חייב להתאים ל-`VITE_ADMIN_EMAILS`).
 
 ## פריסה ל-Vercel
 
@@ -68,9 +68,10 @@ git push origin main
    | `VITE_FIREBASE_STORAGE_BUCKET` | `storageBucket` |
    | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
    | `VITE_FIREBASE_APP_ID` | `appId` |
+   | `VITE_ADMIN_EMAILS` | מיילי Google מורשים למנהל (מופרדים בפסיק) |
 
 5. **Deploy**. קובץ `vercel.json` בפרויקט מפנה את כל הנתיבים (`/`, `/admin`) ל-`index.html` כדי ש-React Router יעבוד ברענון דף.
-6. בדיקה: פתחו `https://your-app.vercel.app/admin`, התחברו עם `carmeli2026`, צרו טיפול — וודאו שהמסמך מופיע ב-Firestore.
+6. בדיקה: פתחו `https://your-app.vercel.app/admin`, התחברו עם Google, צרו טיפול — וודאו שהמסמך מופיע ב-Firestore.
 
 ### פיתוח מקומי עם Firebase
 
@@ -80,16 +81,17 @@ cp .env.example .env
 npm run dev
 ```
 
-> **הערה:** בממשק הנוכחי אין Firebase Auth — כניסת המנהל מוגנת בסיסמה בצד הלקוח (`carmeli2026`) בלבד. לפרודקשן מומלץ להוסיף Auth או Cloud Functions.
-
-## מבנה נתונים
+## מבנה נתונים ופרטיות
 
 - `shifts/{shiftId}` — פרטי משמרת (מטפל, סוג טיפול, תאריך, שעות, משך משבצת)
-- `shifts/{shiftId}/appointments/{slotId}` — משבצות עם `status`: `available` | `booked` ופרטי חייל לאחר הרשמה (`personalNumber`, `idNumber`, `battalion`, `fullName`, `phone`, `email`)
+- `shifts/{shiftId}/appointments/{slotId}` — **ציבורי**: `startTime`, `endTime`, `status` (`available` | `booked`) בלבד
+- `private_bookings/{shiftId}_{slotId}` — **פרטי (מנהל בלבד)**: `shiftId`, `slotId`, `personalNumber`, `soldierName`, `phone`, `email`, `idNumber`, `battalion`
+
+חיילים ללא התחברות רואים רק זמינות; PII נשמר ב-`private_bookings`. מנהלים מתחברים עם Google (`/admin`) ורואים לוח מלא (join בין המשבצות ל-private).
 
 ## מסכים
 
 | נתיב | תיאור |
 |------|--------|
 | `/` | הרשמת חייל — בחירת טיפול, משבצת, מילוי טופס |
-| `/admin` | לוח מנהל — סיסמה `carmeli2026`, יצירת טיפולים, שיתוף קישור |
+| `/admin` | לוח מנהל — Google Auth, יצירת טיפולים, שיתוף קישור |
