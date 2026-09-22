@@ -3,17 +3,18 @@ import { formatBreaksSummary } from './breaks';
 import { formatHebrewDate } from './timeSlots';
 
 export async function shareText({ title, body, url }) {
-  const fullText = url ? `${body}\n\n${url}` : body;
+  const clipboardText = url ? `${body}\n\n${url}` : body;
   try {
     if (navigator.share) {
+      // url בנפרד — לא לשים את הקישור גם ב-text (WhatsApp מציג כפילות)
       await navigator.share({
         title,
-        text: fullText,
+        text: body,
         ...(url ? { url } : {}),
       });
       return 'shared';
     }
-    await navigator.clipboard.writeText(fullText);
+    await navigator.clipboard.writeText(clipboardText);
     return 'copied';
   } catch (err) {
     if (err?.name === 'AbortError') return 'cancelled';
