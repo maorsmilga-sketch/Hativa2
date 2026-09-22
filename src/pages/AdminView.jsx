@@ -55,7 +55,7 @@ export default function AdminView() {
     const url = window.location.origin + '/';
     const shareData = {
       title: 'חטיבת כרמלי — הרשמה לטיפולים',
-      text: 'להרשמה למשמרות טיפול ושיקום בחטיבת כרמלי:',
+      text: 'להרשמה לטיפולים ושיקום בחטיבת כרמלי:',
       url,
     };
 
@@ -81,7 +81,7 @@ export default function AdminView() {
       const shiftId = await createShiftWithAppointments(form);
       setMessage({
         type: 'success',
-        text: `משמרת נוצרה בהצלחה (${shiftId.slice(0, 8)}…). המשבצות נשמרו ב-Firestore.`,
+        text: `הטיפול נוצר בהצלחה (${shiftId.slice(0, 8)}…). המשבצות נשמרו ב-Firestore.`,
       });
       setForm(emptyForm);
       setRegistrantsRefresh((n) => n + 1);
@@ -89,7 +89,7 @@ export default function AdminView() {
       console.error(err);
       setMessage({
         type: 'error',
-        text: err.message || 'שגיאה ביצירת המשמרת. בדקו את הגדרות Firebase.',
+        text: err.message || 'שגיאה ביצירת הטיפול. בדקו את הגדרות Firebase.',
       });
     } finally {
       setSubmitting(false);
@@ -131,7 +131,7 @@ export default function AdminView() {
   }
 
   return (
-    <Layout title="לוח בקרה — מנהל" subtitle="יצירת משמרות טיפול">
+    <Layout title="לוח בקרה — מנהל" subtitle="יצירת טיפולים">
       <div className="mb-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -165,7 +165,7 @@ export default function AdminView() {
         onSubmit={handleCreateShift}
         className="space-y-4 rounded-xl bg-white p-4 shadow-sm"
       >
-        <h2 className="text-lg font-semibold text-olive-800">משמרת טיפול חדשה</h2>
+        <h2 className="text-lg font-semibold text-olive-800">טיפול חדש</h2>
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">שם רופא / מטפל</span>
@@ -247,7 +247,7 @@ export default function AdminView() {
           disabled={submitting}
           className="w-full rounded-xl bg-olive-700 py-3 font-semibold text-white hover:bg-olive-800 disabled:opacity-60"
         >
-          {submitting ? 'יוצר משמרת...' : 'יצירת משמרת ומשבצות'}
+          {submitting ? 'יוצר טיפול...' : 'יצירת טיפול ומשבצות'}
         </button>
       </form>
 

@@ -19,7 +19,7 @@ export async function createShiftWithAppointments(shiftData) {
   const slots = generateTimeSlots(startTime, endTime, Number(slotDuration));
 
   if (slots.length === 0) {
-    throw new Error('לא נוצרו משבצות — בדקו את שעות ההתחלה/סיום והמשך המשבצת');
+    throw new Error('לא נוצרו משבצות — בדקו שעות התחלה/סיום ומשך המשבצת בטיפול');
   }
 
   const shiftRef = await addDoc(collection(db, SHIFTS_COLLECTION), {

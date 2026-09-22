@@ -1,11 +1,19 @@
+import { useState } from 'react';
+
 function BrigadeLogo() {
+  const [src, setSrc] = useState('/logo.png');
+
   return (
     <img
-      src="/logo.png"
-      alt="סמל חטיבת כרמלי"
+      src={src}
+      alt=""
+      aria-hidden="true"
       className="h-12 w-12 shrink-0 object-contain drop-shadow sm:h-14 sm:w-14"
       width={56}
       height={56}
+      onError={() => {
+        if (src !== '/logo.svg') setSrc('/logo.svg');
+      }}
     />
   );
 }

@@ -40,7 +40,7 @@ export default function SoldierView() {
       setShifts(data);
     } catch (err) {
       console.error(err);
-      setError('שגיאה בטעינת המשמרות. ודאו שה-Firebase מוגדר כראוי.');
+      setError('שגיאה בטעינת הטיפולים. ודאו שה-Firebase מוגדר כראוי.');
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export default function SoldierView() {
   return (
     <Layout
       title="מערכת טיפולים ושיקום"
-      subtitle="הרשמה למשמרות טיפול — לוחמי וחיילי הכרמלי"
+      subtitle="הרשמה לטיפולים — לוחמי וחיילי הכרמלי"
     >
       <StepIndicator currentStep={step} />
 
@@ -129,12 +129,12 @@ export default function SoldierView() {
 
       {step === 1 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold text-olive-800">משמרות זמינות</h2>
+          <h2 className="mb-3 text-lg font-semibold text-olive-800">טיפולים זמינים</h2>
           {loading ? (
-            <p className="text-olive-600">טוען משמרות...</p>
+            <p className="text-olive-600">טוען טיפולים...</p>
           ) : shifts.length === 0 ? (
             <p className="rounded-xl bg-white p-4 text-olive-600 shadow-sm">
-              אין משמרות פתוחות כרגע. נסו שוב מאוחר יותר.
+              אין טיפולים פתוחים כרגע. המנהל יפרסם טיפולים חדשים — נסו שוב מאוחר יותר.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -174,7 +174,7 @@ export default function SoldierView() {
             }}
             className="mb-4 text-sm font-medium text-olive-700 underline"
           >
-            חזרה לרשימת משמרות
+            חזרה לרשימת טיפולים
           </button>
           <h2 className="mb-1 text-lg font-semibold text-olive-800">בחירת שעה</h2>
           <p className="mb-4 text-sm text-olive-600">

@@ -28,7 +28,7 @@ export function downloadRegistrantsExcel(registrants) {
     'ת.ז.': entry.idNumber || '',
     טלפון: entry.phone || '',
     'דוא"ל': entry.email || '',
-    'תאריך משמרת': entry.shiftDate || '',
+    'תאריך טיפול': entry.shiftDate || '',
     'שעת התחלה': entry.startTime || '',
     'שעת סיום': entry.endTime || '',
     'סוג טיפול': entry.treatmentType || '',

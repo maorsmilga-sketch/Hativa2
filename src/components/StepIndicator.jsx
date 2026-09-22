@@ -1,4 +1,4 @@
-const STEPS = ['בחירת משמרת', 'בחירת שעה', 'פרטי הרשמה'];
+const STEPS = ['בחירת טיפול', 'בחירת שעה', 'פרטי הרשמה'];
 
 export default function StepIndicator({ currentStep }) {
   return (

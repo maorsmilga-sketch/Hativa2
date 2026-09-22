@@ -17,6 +17,19 @@ npm run dev
 
 פתחו `http://localhost:5173` — דף חיילים (`/`) או מנהל (`/admin`).
 
+## לוגו (חובה לפריסה)
+
+האתר מחפש **`public/logo.png`**. הקובץ חייב להיות בתיקייה `public/` (לא בשורש הריפo) ולהיכנס ל-Git:
+
+```bash
+# העתיקו את logo.png לתיקייה public/
+git add public/logo.png
+git commit -m "Add brigade logo"
+git push origin main
+```
+
+אם `logo.png` חסר, מוצג גיבוי זמני (`public/logo.svg`).
+
 ## הגדרת Firebase
 
 1. היכנסו ל-[Firebase Console](https://console.firebase.google.com/) וצרו פרויקט חדש.
@@ -47,7 +60,7 @@ npm run dev
    | `VITE_FIREBASE_APP_ID` | `appId` |
 
 5. **Deploy**. קובץ `vercel.json` בפרויקט מפנה את כל הנתיבים (`/`, `/admin`) ל-`index.html` כדי ש-React Router יעבוד ברענון דף.
-6. בדיקה: פתחו `https://your-app.vercel.app/admin`, התחברו עם `carmeli2026`, צרו משמרת — וודאו שהמסמך מופיע ב-Firestore.
+6. בדיקה: פתחו `https://your-app.vercel.app/admin`, התחברו עם `carmeli2026`, צרו טיפול — וודאו שהמסמך מופיע ב-Firestore.
 
 ### פיתוח מקומי עם Firebase
 
@@ -68,5 +81,5 @@ npm run dev
 
 | נתיב | תיאור |
 |------|--------|
-| `/` | הרשמת חייל — בחירת משמרת, משבצת, מילוי טופס |
-| `/admin` | לוח מנהל — סיסמה `carmeli2026`, יצירת משמרות, שיתוף קישור |
+| `/` | הרשמת חייל — בחירת טיפול, משבצת, מילוי טופס |
+| `/admin` | לוח מנהל — סיסמה `carmeli2026`, יצירת טיפולים, שיתוף קישור |
