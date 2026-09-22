@@ -18,7 +18,7 @@ function BrigadeLogo() {
   );
 }
 
-export default function Layout({ children, title, subtitle }) {
+export default function Layout({ children, title, subtitle, headerNotice }) {
   return (
     <div className="min-h-dvh bg-olive-50 text-olive-950">
       <header className="bg-olive-800 text-white shadow-md">
@@ -32,6 +32,7 @@ export default function Layout({ children, title, subtitle }) {
             {subtitle ? (
               <p className="mt-1 text-xs text-olive-100 sm:text-sm">{subtitle}</p>
             ) : null}
+            {headerNotice}
           </div>
           <BrigadeLogo />
         </div>

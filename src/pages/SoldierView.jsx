@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import HeaderScheduleChangeNotice from '../components/HeaderScheduleChangeNotice';
 import Layout from '../components/Layout';
 import SiteFooter from '../components/SiteFooter';
 import StepIndicator from '../components/StepIndicator';
@@ -122,7 +123,8 @@ export default function SoldierView() {
   return (
     <Layout
       title="מערכת טיפולים ושיקום"
-      subtitle="הרשמה לטיפולים — לוחמי וחיילי הכרמלי"
+      subtitle="הרשמה לטיפולים — לוחמי וחיילי חטיבת כרמלי"
+      headerNotice={<HeaderScheduleChangeNotice />}
     >
       <StepIndicator currentStep={step} onStepClick={handleStepIndicatorClick} />
 
