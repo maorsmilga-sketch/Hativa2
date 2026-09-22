@@ -195,6 +195,9 @@ export default function SoldierView() {
                       <p className="text-sm text-olive-600">
                         {displayTreatmentType(shift.treatmentType)}
                       </p>
+                      {shift.location ? (
+                        <p className="mt-1 text-xs text-olive-600">מיקום: {shift.location}</p>
+                      ) : null}
                       <p className="mt-2 text-xs text-olive-500">
                         {shift.startTime} – {shift.endTime}
                       </p>
@@ -226,9 +229,14 @@ export default function SoldierView() {
             חזרה לרשימת טיפולים
           </button>
           <h2 className="mb-1 text-lg font-semibold text-olive-800">בחירת שעה</h2>
-          <p className="mb-4 text-sm text-olive-600">
+          <p className="mb-1 text-sm text-olive-600">
             {selectedShift.doctorName} · {formatHebrewDate(selectedShift.date)}
           </p>
+          {selectedShift.location ? (
+            <p className="mb-4 text-sm text-olive-700">מיקום: {selectedShift.location}</p>
+          ) : (
+            <div className="mb-4" />
+          )}
           {formatBreaksSummary(selectedShift.breaks) ? (
             <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
               <p className="font-medium">הפסקות מטפל (לא ניתן להירשם)</p>

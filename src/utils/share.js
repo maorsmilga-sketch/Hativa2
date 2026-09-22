@@ -31,6 +31,9 @@ export function buildTreatmentShareBody(shift) {
     `תאריך: ${formatHebrewDate(shift.date)}`,
     `שעות: ${shift.startTime} – ${shift.endTime}`,
   ];
+  if (shift.location) {
+    lines.push(`מיקום: ${shift.location}`);
+  }
   const breaksText = formatBreaksSummary(shift.breaks);
   if (breaksText) {
     lines.push(`הפסקות (לא ניתן להירשם): ${breaksText}`);

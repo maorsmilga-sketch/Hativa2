@@ -24,6 +24,7 @@ const emptyForm = {
   endTime: '17:00',
   slotDuration: '30',
   notes: '',
+  location: '',
   breaks: [],
   recurrenceEnabled: false,
   recurrenceWeekday: 2,
@@ -116,11 +117,15 @@ export default function AdminView() {
       });
       return;
     }
+    const futureNote =
+      result?.futureUpdated > 0
+        ? ` עודכנו גם ${result.futureUpdated} מופעים עתידיים בסדרה המחזורית.`
+        : '';
     setMessage({
       type: 'success',
       text: result?.scheduleLocked
-        ? 'הטיפול עודכן (שעות ומשבצות נשארו ללא שינוי בגלל נרשמים קיימים).'
-        : 'הטיפול עודכן בהצלחה.',
+        ? `הטיפול עודכן (שעות ומשבצות נשארו ללא שינוי בגלל נרשמים קיימים).${futureNote}`
+        : `הטיפול עודכן בהצלחה.${futureNote}`,
     });
   };
 
@@ -191,6 +196,17 @@ export default function AdminView() {
           value={form.notes}
           onChange={(value) => setForm({ ...form, notes: value })}
         />
+
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium">מיקום</span>
+          <input
+            type="text"
+            placeholder="למשל: מרפאה 3, חדר 12"
+            className="w-full rounded-lg border border-olive-200 px-3 py-2.5 focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+          />
+        </label>
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">

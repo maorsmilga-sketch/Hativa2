@@ -25,6 +25,7 @@ service cloud.firestore {
         && data.endTime is string
         && data.slotDuration is int
         && (!('notes' in data) || data.notes is string)
+        && (!('location' in data) || data.location is string)
         && (!('breaks' in data) || data.breaks is list);
     }
 

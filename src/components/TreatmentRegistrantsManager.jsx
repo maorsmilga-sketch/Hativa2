@@ -7,6 +7,7 @@ import {
   fetchShifts,
   updateBookedAppointment,
 } from '../utils/shifts';
+import { groupShiftsByTreatmentDomain } from '../utils/treatmentGroups';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 const emptySoldierForm = () => ({
@@ -31,6 +32,7 @@ function appointmentToForm(apt) {
 
 export default function TreatmentRegistrantsManager({ refreshToken = 0, onChanged }) {
   const [shifts, setShifts] = useState([]);
+  const [selectedDomain, setSelectedDomain] = useState('');
   const [selectedShiftId, setSelectedShiftId] = useState('');
   const [booked, setBooked] = useState([]);
   const [loadingShifts, setLoadingShifts] = useState(true);
@@ -59,6 +61,13 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
     loadShifts();
   }, [loadShifts, refreshToken]);
 
+  const groupedShifts = useMemo(() => groupShiftsByTreatmentDomain(shifts), [shifts]);
+
+  const shiftsInSelectedDomain = useMemo(() => {
+    if (!selectedDomain) return [];
+    return groupedShifts.find((g) => g.label === selectedDomain)?.shifts ?? [];
+  }, [groupedShifts, selectedDomain]);
+
   const selectedShift = useMemo(
     () => shifts.find((s) => s.id === selectedShiftId) || null,
     [shifts, selectedShiftId],
@@ -86,6 +95,11 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
   useEffect(() => {
     loadBooked(selectedShiftId);
   }, [selectedShiftId, loadBooked, refreshToken]);
+
+  const handleSelectDomain = (e) => {
+    setSelectedDomain(e.target.value);
+    setSelectedShiftId('');
+  };
 
   const handleSelectShift = (e) => {
     setSelectedShiftId(e.target.value);
@@ -144,7 +158,7 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
     <section className="mt-8 space-y-4">
       <h2 className="text-lg font-semibold text-olive-800">ניהול נרשמים לפי טיפול</h2>
       <p className="text-sm text-olive-600">
-        בחרו טיפול, צפו ברשימת הנרשמים, וערכו או הסירו רישום.
+        בחרו תחום ואז טיפול ספציפי, צפו בנרשמים וערכו או הסירו רישום.
       </p>
 
       {error ? (
@@ -154,18 +168,36 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
       ) : null}
 
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-olive-800">בחירת טיפול</span>
+        <span className="mb-1 block text-sm font-medium text-olive-800">תחום טיפול</span>
         <select
           className="w-full rounded-lg border border-olive-200 bg-white px-3 py-2.5 text-sm focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
-          value={selectedShiftId}
-          onChange={handleSelectShift}
+          value={selectedDomain}
+          onChange={handleSelectDomain}
           disabled={loadingShifts}
         >
-          <option value="">— בחרו טיפול —</option>
-          {shifts.map((shift) => (
+          <option value="">— בחרו תחום —</option>
+          {groupedShifts.map(({ label, shifts: groupShifts }) => (
+            <option key={label} value={label}>
+              {label} ({groupShifts.length})
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="block">
+        <span className="mb-1 block text-sm font-medium text-olive-800">טיפול</span>
+        <select
+          className="w-full rounded-lg border border-olive-200 bg-white px-3 py-2.5 text-sm focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300 disabled:bg-olive-50"
+          value={selectedShiftId}
+          onChange={handleSelectShift}
+          disabled={loadingShifts || !selectedDomain}
+        >
+          <option value="">
+            {selectedDomain ? '— בחרו טיפול —' : '— קודם בחרו תחום —'}
+          </option>
+          {shiftsInSelectedDomain.map((shift) => (
             <option key={shift.id} value={shift.id}>
-              {formatHebrewDate(shift.date)} · {shift.startTime} · {shift.doctorName} ·{' '}
-              {displayTreatmentType(shift.treatmentType)}
+              {formatHebrewDate(shift.date)} · {shift.startTime} · {shift.doctorName}
             </option>
           ))}
         </select>
@@ -178,6 +210,9 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
             {selectedShift.doctorName} · {formatHebrewDate(selectedShift.date)} ·{' '}
             {selectedShift.startTime}–{selectedShift.endTime}
           </p>
+          {selectedShift.location ? (
+            <p className="text-olive-700">מיקום: {selectedShift.location}</p>
+          ) : null}
         </div>
       )}
 

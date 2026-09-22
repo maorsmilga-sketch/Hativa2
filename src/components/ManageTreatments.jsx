@@ -7,9 +7,11 @@ import {
 import {
   fetchShifts,
   updateShiftWithAppointments,
+  updateRecurringFutureShifts,
   deleteShift,
   countBookedAppointments,
 } from '../utils/shifts';
+import { groupShiftsByTreatmentDomain } from '../utils/treatmentGroups';
 import { weekdayLabel } from '../utils/recurrence';
 import { formatHebrewDate } from '../utils/timeSlots';
 import BreakPeriodsField from './BreakPeriodsField';
@@ -29,31 +31,9 @@ const emptyShiftForm = () => ({
   endTime: '17:00',
   slotDuration: '30',
   notes: '',
+  location: '',
   breaks: [],
 });
-
-function sortTreatmentGroupLabels(labels) {
-  const order = new Map(TREATMENT_TYPES.map((t, index) => [t, index]));
-  return [...labels].sort((a, b) => {
-    const indexA = order.has(a) ? order.get(a) : TREATMENT_TYPES.length;
-    const indexB = order.has(b) ? order.get(b) : TREATMENT_TYPES.length;
-    if (indexA !== indexB) return indexA - indexB;
-    return a.localeCompare(b, 'he');
-  });
-}
-
-function groupShiftsByTreatmentDomain(shifts) {
-  const map = new Map();
-  shifts.forEach((shift) => {
-    const label = displayTreatmentType(shift.treatmentType);
-    if (!map.has(label)) map.set(label, []);
-    map.get(label).push(shift);
-  });
-  return sortTreatmentGroupLabels([...map.keys()]).map((label) => ({
-    label,
-    shifts: map.get(label),
-  }));
-}
 
 function shiftToForm(shift) {
   const { category, otherText } = splitTreatmentType(shift.treatmentType);
@@ -66,6 +46,7 @@ function shiftToForm(shift) {
     endTime: shift.endTime || '17:00',
     slotDuration: String(shift.slotDuration ?? 30),
     notes: shift.notes || '',
+    location: shift.location || '',
     breaks: Array.isArray(shift.breaks) ? shift.breaks : [],
   };
 }
@@ -157,13 +138,22 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!editingId) return;
+    const editedShift = shifts.find((s) => s.id === editingId);
     setSaving(true);
     setError('');
     try {
       const result = await updateShiftWithAppointments(editingId, editForm);
+      let futureUpdated = 0;
+      if (editedShift?.recurrenceGroupId) {
+        const { futureUpdated: count } = await updateRecurringFutureShifts(
+          editedShift,
+          editForm,
+        );
+        futureUpdated = count;
+      }
       await load();
       cancelEdit();
-      onUpdated?.(result);
+      onUpdated?.({ ...result, futureUpdated });
     } catch (err) {
       console.error(err);
       setError(err.message || 'שגיאה בעדכון הטיפול');
@@ -226,10 +216,16 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
               {editingId === shift.id ? (
                 <form onSubmit={handleSave} className="space-y-3">
                   <p className="text-sm font-semibold text-olive-800">עריכת טיפול</p>
+                  {shifts.find((s) => s.id === editingId)?.recurrenceGroupId ? (
+                    <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                      טיפול מחזורי — השינויים יחולו גם על כל המופעים העתידיים בסדרה (מעבר לתאריך
+                      של מופע זה).
+                    </p>
+                  ) : null}
                   {scheduleLocked ? (
                     <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                      יש {bookedCount} נרשמים — ניתן לערוך שם מטפל, סוג טיפול ותאריך בלבד. שעות
-                      ומשבצות נעולות.
+                      יש {bookedCount} נרשמים — ניתן לערוך שם מטפל, סוג טיפול, מיקום ותאריך בלבד.
+                      שעות ומשבצות נעולות.
                     </p>
                   ) : null}
 
@@ -262,6 +258,17 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     value={editForm.notes}
                     onChange={(value) => setEditForm({ ...editForm, notes: value })}
                   />
+
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium">מיקום</span>
+                    <input
+                      type="text"
+                      placeholder="למשל: מרפאה 3, חדר 12"
+                      className="w-full rounded-lg border border-olive-200 px-3 py-2.5"
+                      value={editForm.location}
+                      onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                    />
+                  </label>
 
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium">תאריך</span>
@@ -364,6 +371,9 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                       </p>
                     ) : null}
                     <p className="text-olive-700">{shift.doctorName}</p>
+                    {shift.location ? (
+                      <p className="text-xs text-olive-600">מיקום: {shift.location}</p>
+                    ) : null}
                     <p className="mt-1 text-xs text-olive-500">
                       {shift.startTime} – {shift.endTime} · משבצת {shift.slotDuration} דק׳
                     </p>

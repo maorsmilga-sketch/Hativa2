@@ -24,6 +24,7 @@ import {
 import { resolveTreatmentType } from '../constants/treatmentTypes';
 import { normalizeBreaks } from './breaks';
 import { listWeeklyOccurrenceDates } from './recurrence';
+import { filterShiftsOpenForBooking } from './shiftSchedule';
 import { generateTimeSlots } from './timeSlots';
 
 const SHIFTS_COLLECTION = 'shifts';
@@ -47,6 +48,7 @@ function buildShiftPayload(shiftData) {
     slotDuration,
     notes,
     breaks,
+    location,
   } = shiftData;
 
   return {
@@ -57,6 +59,7 @@ function buildShiftPayload(shiftData) {
     endTime,
     slotDuration: Number(slotDuration),
     notes: (notes || '').trim(),
+    location: (location || '').trim(),
     breaks: normalizeBreaks(breaks),
   };
 }
@@ -138,7 +141,7 @@ export async function fetchShifts() {
 }
 
 export async function fetchShiftsWithAvailability() {
-  const shifts = await fetchShifts();
+  const shifts = filterShiftsOpenForBooking(await fetchShifts());
   return Promise.all(
     shifts.map(async (shift) => {
       const appointments = await fetchAppointments(shift.id);
@@ -172,6 +175,7 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
         treatmentType: payload.treatmentType,
         date: payload.date,
         notes: payload.notes,
+        location: payload.location,
         breaks: normalizeBreaks(current.breaks || payload.breaks),
         startTime: current.startTime || payload.startTime,
         endTime: current.endTime || payload.endTime,
@@ -213,6 +217,29 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
     throw new Error(formatFirestoreError(err));
   }
   return { scheduleLocked: false };
+}
+
+export async function updateRecurringFutureShifts(editedShift, shiftData) {
+  if (!editedShift?.recurrenceGroupId) {
+    return { futureUpdated: 0 };
+  }
+
+  const all = await fetchShifts();
+  const futureShifts = all.filter(
+    (s) =>
+      s.recurrenceGroupId === editedShift.recurrenceGroupId &&
+      s.id !== editedShift.id &&
+      (s.date || '') > (editedShift.date || ''),
+  );
+
+  for (const shift of futureShifts) {
+    await updateShiftWithAppointments(shift.id, {
+      ...shiftData,
+      date: shift.date,
+    });
+  }
+
+  return { futureUpdated: futureShifts.length };
 }
 
 export async function deleteShift(shiftId) {
