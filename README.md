@@ -19,10 +19,11 @@ npm run dev
 
 ## הגדרת Firebase
 
-1. צרו פרויקט ב-[Firebase Console](https://console.firebase.google.com/).
-2. הוסיפו אפליקציית Web והעתיקו את פרטי ההגדרה ל-`src/firebase/config.js`.
-3. הפעילו Firestore Database (מצב production או test — לפי הצורך).
-4. כללי אבטחה לדוגמה (התאימו לסביבה שלכם):
+1. היכנסו ל-[Firebase Console](https://console.firebase.google.com/) וצרו פרויקט חדש.
+2. **Build → Firestore Database → Create database** (בחרו אזור, למשל `europe-west1`).
+3. **Project settings (גלגל) → Your apps → Web (`</>`)** — רשמו שם לאפליקציה וקבלו את אובייקט `firebaseConfig`.
+4. העתיקו את הערכים לקובץ `.env` מקומי (ראו `.env.example`) **או** ישירות ל-Vercel (ראו למטה).
+5. כללי Firestore לדוגמה שמתאימים לאפליקציה הנוכחית (ללא Auth — מתאים לפיילוט בלבד):
 
 ```
 rules_version = '2';
@@ -30,16 +31,48 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /shifts/{shiftId} {
       allow read: if true;
-      allow write: if false; // כתיבה רק דרך Admin SDK / Cloud Functions בפרודקשן
+      allow create: if true;
       match /appointments/{appointmentId} {
         allow read: if true;
+        allow create: if true;
         allow update: if resource.data.status == 'available'
                       && request.resource.data.status == 'booked';
-        allow create: if false;
       }
     }
   }
 }
+```
+
+6. **Authentication → Settings → Authorized domains** — הוסיפו את דומיין ה-Vercel (למשל `your-app.vercel.app`) אחרי הפריסה.
+
+## פריסה ל-Vercel
+
+1. דחפו את הקוד ל-GitHub (הריפו `Hativa2`).
+2. [vercel.com](https://vercel.com) → **Add New → Project** → ייבוא הריפו.
+3. הגדרות Build (Vite — בדרך כלל אוטומטי):
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+4. **Environment Variables** — הוסיפו (לכל הסביבות Production / Preview):
+
+   | שם | ערך מ-Firebase |
+   |----|----------------|
+   | `VITE_FIREBASE_API_KEY` | `apiKey` |
+   | `VITE_FIREBASE_AUTH_DOMAIN` | `authDomain` |
+   | `VITE_FIREBASE_PROJECT_ID` | `projectId` |
+   | `VITE_FIREBASE_STORAGE_BUCKET` | `storageBucket` |
+   | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
+   | `VITE_FIREBASE_APP_ID` | `appId` |
+
+5. **Deploy**. קובץ `vercel.json` בפרויקט מפנה את כל הנתיבים (`/`, `/admin`) ל-`index.html` כדי ש-React Router יעבוד ברענון דף.
+6. בדיקה: פתחו `https://your-app.vercel.app/admin`, התחברו עם `carmeli2026`, צרו משמרת — וודאו שהמסמך מופיע ב-Firestore.
+
+### פיתוח מקומי עם Firebase
+
+```bash
+cp .env.example .env
+# מלאו ערכים אמיתיים
+npm run dev
 ```
 
 > **הערה:** בממשק הנוכחי אין Firebase Auth — כניסת המנהל מוגנת בסיסמה בצד הלקוח (`carmeli2026`) בלבד. לפרודקשן מומלץ להוסיף Auth או Cloud Functions.
