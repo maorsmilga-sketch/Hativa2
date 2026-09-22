@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TREATMENT_TYPES,
   displayTreatmentType,
@@ -31,6 +31,29 @@ const emptyShiftForm = () => ({
   notes: '',
   breaks: [],
 });
+
+function sortTreatmentGroupLabels(labels) {
+  const order = new Map(TREATMENT_TYPES.map((t, index) => [t, index]));
+  return [...labels].sort((a, b) => {
+    const indexA = order.has(a) ? order.get(a) : TREATMENT_TYPES.length;
+    const indexB = order.has(b) ? order.get(b) : TREATMENT_TYPES.length;
+    if (indexA !== indexB) return indexA - indexB;
+    return a.localeCompare(b, 'he');
+  });
+}
+
+function groupShiftsByTreatmentDomain(shifts) {
+  const map = new Map();
+  shifts.forEach((shift) => {
+    const label = displayTreatmentType(shift.treatmentType);
+    if (!map.has(label)) map.set(label, []);
+    map.get(label).push(shift);
+  });
+  return sortTreatmentGroupLabels([...map.keys()]).map((label) => ({
+    label,
+    shifts: map.get(label),
+  }));
+}
 
 function shiftToForm(shift) {
   const { category, otherText } = splitTreatmentType(shift.treatmentType);
@@ -151,6 +174,8 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
 
   const scheduleLocked = bookedCount > 0;
 
+  const groupedShifts = useMemo(() => groupShiftsByTreatmentDomain(shifts), [shifts]);
+
   return (
     <section className="mt-8 space-y-4">
       <h2 className="text-lg font-semibold text-olive-800">עריכת טיפולים קיימים</h2>
@@ -168,8 +193,32 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
           אין טיפולים לעריכה. צרו טיפול חדש למעלה.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {shifts.map((shift) => (
+        <div className="space-y-3">
+          {groupedShifts.map(({ label, shifts: groupShifts }) => {
+            const sectionHasEdit = groupShifts.some((s) => s.id === editingId);
+            return (
+              <details
+                key={label}
+                open={sectionHasEdit || groupedShifts.length === 1}
+                className="group rounded-xl border border-olive-200 bg-olive-50/60 shadow-sm"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+                  <span className="text-sm font-semibold text-olive-900 sm:text-base">{label}</span>
+                  <span className="flex items-center gap-2 text-xs text-olive-600">
+                    <span className="rounded-full bg-olive-200/80 px-2 py-0.5 font-medium text-olive-800">
+                      {groupShifts.length}{' '}
+                      {groupShifts.length === 1 ? 'טיפול' : 'טיפולים'}
+                    </span>
+                    <span
+                      className="text-olive-500 transition-transform group-open:rotate-180"
+                      aria-hidden
+                    >
+                      ▾
+                    </span>
+                  </span>
+                </summary>
+                <ul className="space-y-3 border-t border-olive-200 bg-white p-3 pt-2">
+                  {groupShifts.map((shift) => (
             <li
               key={shift.id}
               className="rounded-xl border border-olive-200 bg-white p-4 shadow-sm"
@@ -315,9 +364,6 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                       </p>
                     ) : null}
                     <p className="text-olive-700">{shift.doctorName}</p>
-                    <p className="text-olive-600">
-                      {displayTreatmentType(shift.treatmentType)}
-                    </p>
                     <p className="mt-1 text-xs text-olive-500">
                       {shift.startTime} – {shift.endTime} · משבצת {shift.slotDuration} דק׳
                     </p>
@@ -357,8 +403,12 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                 </div>
               )}
             </li>
-          ))}
-        </ul>
+                  ))}
+                </ul>
+              </details>
+            );
+          })}
+        </div>
       )}
     </section>
   );
