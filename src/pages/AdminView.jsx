@@ -101,6 +101,10 @@ export default function AdminView() {
 
   const handleTreatmentUpdated = (result) => {
     bumpRefresh();
+    if (result?.deleted) {
+      setMessage({ type: 'success', text: 'הטיפול נמחק בהצלחה.' });
+      return;
+    }
     setMessage({
       type: 'success',
       text: result?.scheduleLocked

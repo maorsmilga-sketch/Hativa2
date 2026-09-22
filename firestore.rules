@@ -1,35 +1,29 @@
 rules_version = '2';
 
-// חטיבת כרמלי — מערכת טיפולים
-// מתאים לאפליקציה הנוכחית ללא Firebase Authentication (פיילוט).
-// לפרודקשן: הגבילו create/update עם custom claims או Cloud Functions.
+// חטיבת כרמלי — מערכת טיפולים (פיילוט, ללא Auth)
+// פרסמו קובץ זה ב-Firebase Console → Firestore → Rules
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isValidShift(data) {
+      return data.keys().hasAll([
+          'doctorName', 'treatmentType', 'date', 'startTime', 'endTime', 'slotDuration'
+        ])
+        && data.doctorName is string
+        && data.treatmentType is string
+        && data.date is string
+        && data.startTime is string
+        && data.endTime is string
+        && data.slotDuration is int
+        && (!('notes' in data) || data.notes is string);
+    }
+
     match /shifts/{shiftId} {
       allow read: if true;
-      allow delete: if false;
-      allow update: if request.resource.data.keys().hasAll([
-          'doctorName', 'treatmentType', 'date', 'startTime', 'endTime', 'slotDuration'
-        ])
-        && request.resource.data.doctorName is string
-        && request.resource.data.treatmentType is string
-        && request.resource.data.date is string
-        && request.resource.data.startTime is string
-        && request.resource.data.endTime is string
-        && request.resource.data.slotDuration is int
-        && (!('notes' in request.resource.data) || request.resource.data.notes is string);
-      allow create: if request.resource.data.keys().hasAll([
-          'doctorName', 'treatmentType', 'date', 'startTime', 'endTime', 'slotDuration'
-        ])
-        && request.resource.data.doctorName is string
-        && request.resource.data.treatmentType is string
-        && request.resource.data.date is string
-        && request.resource.data.startTime is string
-        && request.resource.data.endTime is string
-        && request.resource.data.slotDuration is int
-        && (!('notes' in request.resource.data) || request.resource.data.notes is string);
+      allow create: if isValidShift(request.resource.data);
+      allow update: if isValidShift(request.resource.data);
+      allow delete: if true;
 
       match /appointments/{appointmentId} {
         allow read: if true;
@@ -37,7 +31,7 @@ service cloud.firestore {
           && request.resource.data.status == 'available'
           && request.resource.data.startTime is string
           && request.resource.data.endTime is string;
-        allow delete: if resource.data.status == 'available';
+        allow delete: if true;
         allow update: if resource.data.status == 'available'
           && request.resource.data.status == 'booked'
           && request.resource.data.diff(resource.data).affectedKeys()

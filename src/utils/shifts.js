@@ -16,6 +16,14 @@ import { generateTimeSlots } from './timeSlots';
 
 const SHIFTS_COLLECTION = 'shifts';
 
+function formatFirestoreError(err) {
+  const code = err?.code || '';
+  if (code === 'permission-denied') {
+    return 'אין הרשאה ב-Firestore. העתיקו ופרסמו מחדש את firestore.rules מהפרויקט (Firebase Console → Rules → Publish).';
+  }
+  return err?.message || 'שגיאה ב-Firestore';
+}
+
 function buildShiftPayload(shiftData) {
   const {
     doctorName,
@@ -104,16 +112,20 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
   if (bookedCount > 0) {
     const currentSnap = await getDoc(doc(db, SHIFTS_COLLECTION, shiftId));
     const current = currentSnap.data() || {};
-    await updateDoc(doc(db, SHIFTS_COLLECTION, shiftId), {
-      doctorName: payload.doctorName,
-      treatmentType: payload.treatmentType,
-      date: payload.date,
-      notes: payload.notes,
-      startTime: current.startTime,
-      endTime: current.endTime,
-      slotDuration: current.slotDuration,
-      updatedAt: serverTimestamp(),
-    });
+    try {
+      await updateDoc(doc(db, SHIFTS_COLLECTION, shiftId), {
+        doctorName: payload.doctorName,
+        treatmentType: payload.treatmentType,
+        date: payload.date,
+        notes: payload.notes,
+        startTime: current.startTime || payload.startTime,
+        endTime: current.endTime || payload.endTime,
+        slotDuration: Number(current.slotDuration ?? payload.slotDuration),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      throw new Error(formatFirestoreError(err));
+    }
     return { scheduleLocked: true };
   }
 
@@ -135,8 +147,33 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
     ...payload,
     updatedAt: serverTimestamp(),
   });
-  await batch.commit();
+  try {
+    await batch.commit();
+  } catch (err) {
+    throw new Error(formatFirestoreError(err));
+  }
   return { scheduleLocked: false };
+}
+
+export async function deleteShift(shiftId) {
+  const bookedCount = await countBookedAppointments(shiftId);
+  if (bookedCount > 0) {
+    throw new Error(
+      'לא ניתן למחוק טיפול עם חיילים רשומים. ערכו את הטיפול או צרו טיפול חדש במקום.',
+    );
+  }
+
+  const appointments = await fetchAppointments(shiftId);
+  const batch = writeBatch(db);
+  appointments.forEach((apt) => {
+    batch.delete(doc(db, SHIFTS_COLLECTION, shiftId, 'appointments', apt.id));
+  });
+  batch.delete(doc(db, SHIFTS_COLLECTION, shiftId));
+  try {
+    await batch.commit();
+  } catch (err) {
+    throw new Error(formatFirestoreError(err));
+  }
 }
 
 export async function fetchAppointments(shiftId) {

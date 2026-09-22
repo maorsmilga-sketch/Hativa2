@@ -7,6 +7,7 @@ import {
 import {
   fetchShifts,
   updateShiftWithAppointments,
+  deleteShift,
   countBookedAppointments,
 } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
@@ -48,6 +49,7 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
   const [editForm, setEditForm] = useState(emptyShiftForm);
   const [bookedCount, setBookedCount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,6 +84,27 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
     setEditingId(null);
     setEditForm(emptyShiftForm());
     setBookedCount(0);
+  };
+
+  const handleDelete = async (shift) => {
+    const ok = window.confirm(
+      `למחוק את הטיפול של ${shift.doctorName} בתאריך ${shift.date}?\nפעולה זו לא ניתנת לביטול.`,
+    );
+    if (!ok) return;
+
+    setDeletingId(shift.id);
+    setError('');
+    try {
+      await deleteShift(shift.id);
+      if (editingId === shift.id) cancelEdit();
+      await load();
+      onUpdated?.({ deleted: true });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'שגיאה במחיקת הטיפול');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleSave = async (e) => {
@@ -259,13 +282,23 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                       <p className="mt-2 line-clamp-2 text-xs text-olive-600">{shift.notes}</p>
                     ) : null}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(shift)}
-                    className="shrink-0 rounded-lg border border-olive-400 px-3 py-2 text-sm font-medium text-olive-800 hover:bg-olive-50"
-                  >
-                    עריכה
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(shift)}
+                      className="rounded-lg border border-olive-400 px-3 py-2 text-sm font-medium text-olive-800 hover:bg-olive-50"
+                    >
+                      עריכה
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(shift)}
+                      disabled={deletingId === shift.id}
+                      className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {deletingId === shift.id ? 'מוחק...' : 'מחיקה'}
+                    </button>
+                  </div>
                 </div>
               )}
             </li>
