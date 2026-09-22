@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
+import SiteFooter from '../components/SiteFooter';
 import StepIndicator from '../components/StepIndicator';
 import { fetchShifts, fetchAppointments, bookAppointment } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
@@ -81,6 +82,19 @@ export default function SoldierView() {
     setStep(3);
   };
 
+  const handleStepIndicatorClick = (targetStep) => {
+    if (targetStep >= step) return;
+    setStep(targetStep);
+    if (targetStep === 1) {
+      setSelectedShift(null);
+      setSelectedSlot(null);
+      setAppointments([]);
+    }
+    if (targetStep === 2) {
+      setSelectedSlot(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedShift || !selectedSlot) return;
@@ -107,7 +121,7 @@ export default function SoldierView() {
       title="מערכת טיפולים ושיקום"
       subtitle="הרשמה לטיפולים — לוחמי וחיילי הכרמלי"
     >
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={step} onStepClick={handleStepIndicatorClick} />
 
       {successMessage ? (
         <div
@@ -133,9 +147,15 @@ export default function SoldierView() {
           {loading ? (
             <p className="text-olive-600">טוען טיפולים...</p>
           ) : shifts.length === 0 ? (
-            <p className="rounded-xl bg-white p-4 text-olive-600 shadow-sm">
-              אין טיפולים פתוחים כרגע. המנהל יפרסם טיפולים חדשים — נסו שוב מאוחר יותר.
-            </p>
+            <div className="space-y-4 rounded-xl border border-olive-200 bg-white p-4 shadow-sm">
+              <p className="text-olive-800">
+                אין טיפולים פתוחים כרגע. מנהל המערכת צריך לפרסם טיפולים לפני שניתן להירשם.
+              </p>
+              <p className="text-sm text-olive-600">
+                לחצו למטה על <strong className="font-semibold">«כניסת מנהל»</strong> כדי
+                להוסיף טיפול חדש, או רעננו את הרשימה אחרי שהטיפולים פורסמו.
+              </p>
+            </div>
           ) : (
             <ul className="space-y-3">
               {shifts.map((shift) => (
@@ -320,6 +340,8 @@ export default function SoldierView() {
           </form>
         </section>
       )}
+
+      <SiteFooter onRefresh={loadShifts} refreshDisabled={loading} />
     </Layout>
   );
 }

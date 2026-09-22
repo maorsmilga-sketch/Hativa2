@@ -21,3 +21,17 @@ body {
     sans-serif;
   background-color: var(--color-olive-50);
 }
+
+button,
+a,
+[role='button'],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
