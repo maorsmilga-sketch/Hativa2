@@ -23,25 +23,7 @@ npm run dev
 2. **Build → Firestore Database → Create database** (בחרו אזור, למשל `europe-west1`).
 3. **Project settings (גלגל) → Your apps → Web (`</>`)** — רשמו שם לאפליקציה וקבלו את אובייקט `firebaseConfig`.
 4. העתיקו את הערכים לקובץ `.env` מקומי (ראו `.env.example`) **או** ישירות ל-Vercel (ראו למטה).
-5. כללי Firestore לדוגמה שמתאימים לאפליקציה הנוכחית (ללא Auth — מתאים לפיילוט בלבד):
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /shifts/{shiftId} {
-      allow read: if true;
-      allow create: if true;
-      match /appointments/{appointmentId} {
-        allow read: if true;
-        allow create: if true;
-        allow update: if resource.data.status == 'available'
-                      && request.resource.data.status == 'booked';
-      }
-    }
-  }
-}
-```
+5. **Firestore Rules** — העתיקו את התוכן מקובץ [`firestore.rules`](./firestore.rules) ל-Firebase Console → Firestore → **Rules** → **Publish**.
 
 6. **Authentication → Settings → Authorized domains** — הוסיפו את דומיין ה-Vercel (למשל `your-app.vercel.app`) אחרי הפריסה.
 

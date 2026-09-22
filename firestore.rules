@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// חטיבת כרמלי — מערכת טיפולים
+// מתאים לאפליקציה הנוכחית ללא Firebase Authentication (פיילוט).
+// לפרודקשן: הגבילו create/update עם custom claims או Cloud Functions.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /shifts/{shiftId} {
+      allow read: if true;
+      allow update, delete: if false;
+      allow create: if request.resource.data.keys().hasAll([
+          'doctorName', 'treatmentType', 'date', 'startTime', 'endTime', 'slotDuration'
+        ])
+        && request.resource.data.doctorName is string
+        && request.resource.data.treatmentType is string
+        && request.resource.data.date is string
+        && request.resource.data.startTime is string
+        && request.resource.data.endTime is string
+        && request.resource.data.slotDuration is int;
+
+      match /appointments/{appointmentId} {
+        allow read: if true;
+        allow create: if request.resource.data.keys().hasAll(['startTime', 'endTime', 'status'])
+          && request.resource.data.status == 'available'
+          && request.resource.data.startTime is string
+          && request.resource.data.endTime is string;
+        allow delete: if false;
+        allow update: if resource.data.status == 'available'
+          && request.resource.data.status == 'booked'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly([
+                'status', 'personalNumber', 'idNumber', 'battalion',
+                'fullName', 'phone', 'email', 'bookedAt'
+              ])
+          && request.resource.data.personalNumber is string
+          && request.resource.data.idNumber is string
+          && request.resource.data.battalion is string
+          && request.resource.data.fullName is string
+          && request.resource.data.phone is string
+          && request.resource.data.email is string;
+      }
+    }
+  }
+}

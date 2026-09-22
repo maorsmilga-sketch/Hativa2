@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BATTALIONS, UNKNOWN_BATTALION } from '../constants/battalions';
 import { fetchBookedRegistrants } from '../utils/shifts';
+import { downloadRegistrantsExcel } from '../utils/exportRegistrants';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 function battalionKey(battalion) {
@@ -59,16 +60,26 @@ export default function RegistrantsByBattalion({ refreshToken = 0 }) {
 
   return (
     <section className="mt-8 space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-olive-800">נרשמים לפי גדוד</h2>
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="rounded-lg border border-olive-300 bg-white px-3 py-1.5 text-sm font-medium text-olive-800 hover:bg-olive-50 disabled:opacity-60"
-        >
-          {loading ? 'טוען...' : 'רענון'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => downloadRegistrantsExcel(registrants)}
+            disabled={loading || registrants.length === 0}
+            className="rounded-lg bg-olive-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-olive-800 disabled:opacity-60"
+          >
+            ייצוא לאקסל
+          </button>
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="rounded-lg border border-olive-300 bg-white px-3 py-1.5 text-sm font-medium text-olive-800 hover:bg-olive-50 disabled:opacity-60"
+          >
+            {loading ? 'טוען...' : 'רענון'}
+          </button>
+        </div>
       </div>
 
       {error ? (
