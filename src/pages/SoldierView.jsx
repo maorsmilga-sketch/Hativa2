@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import SiteFooter from '../components/SiteFooter';
 import StepIndicator from '../components/StepIndicator';
-import { fetchShifts, fetchAppointments, bookAppointment } from '../utils/shifts';
+import {
+  fetchShiftsWithAvailability,
+  fetchAppointments,
+  bookAppointment,
+} from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 import { BATTALIONS } from '../constants/battalions';
@@ -34,7 +38,7 @@ export default function SoldierView() {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchShifts();
+      const data = await fetchShiftsWithAvailability();
       setShifts(data);
     } catch (err) {
       console.error(err);
@@ -58,6 +62,7 @@ export default function SoldierView() {
   };
 
   const handleSelectShift = async (shift) => {
+    if (shift.isFull) return;
     setSelectedShift(shift);
     setStep(2);
     setAppointmentsLoading(true);
@@ -155,26 +160,50 @@ export default function SoldierView() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {shifts.map((shift) => (
-                <li key={shift.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectShift(shift)}
-                    className="w-full rounded-xl border border-olive-200 bg-white p-4 text-right shadow-sm transition hover:border-olive-500 hover:shadow-md active:scale-[0.99]"
-                  >
-                    <p className="font-semibold text-olive-900">
-                      {formatHebrewDate(shift.date)}
-                    </p>
-                    <p className="mt-1 text-olive-700">{shift.doctorName}</p>
-                    <p className="text-sm text-olive-600">
-                      {displayTreatmentType(shift.treatmentType)}
-                    </p>
-                    <p className="mt-2 text-xs text-olive-500">
-                      {shift.startTime} – {shift.endTime}
-                    </p>
-                  </button>
-                </li>
-              ))}
+              {shifts.map((shift) => {
+                const full = shift.isFull;
+                return (
+                  <li key={shift.id}>
+                    <button
+                      type="button"
+                      disabled={full}
+                      onClick={() => handleSelectShift(shift)}
+                      className={`w-full rounded-xl border p-4 text-right shadow-sm transition ${
+                        full
+                          ? 'cursor-not-allowed border-olive-200 bg-olive-100 opacity-90'
+                          : 'border-olive-200 bg-white hover:border-olive-500 hover:shadow-md active:scale-[0.99]'
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="font-semibold text-olive-900">
+                          {formatHebrewDate(shift.date)}
+                        </p>
+                        {full ? (
+                          <span className="shrink-0 rounded-full bg-olive-600 px-2 py-0.5 text-xs font-medium text-white">
+                            מלא
+                          </span>
+                        ) : (
+                          <span className="shrink-0 text-xs font-medium text-olive-600">
+                            {shift.availableSlots} משבצות פנויות
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-olive-700">{shift.doctorName}</p>
+                      <p className="text-sm text-olive-600">
+                        {displayTreatmentType(shift.treatmentType)}
+                      </p>
+                      <p className="mt-2 text-xs text-olive-500">
+                        {shift.startTime} – {shift.endTime}
+                      </p>
+                      {shift.notes ? (
+                        <p className="mt-2 line-clamp-2 text-xs text-olive-600">
+                          {shift.notes}
+                        </p>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -197,8 +226,23 @@ export default function SoldierView() {
           <p className="mb-4 text-sm text-olive-600">
             {selectedShift.doctorName} · {formatHebrewDate(selectedShift.date)}
           </p>
+          {selectedShift.notes ? (
+            <div className="mb-4 rounded-xl border border-olive-200 bg-olive-50 px-4 py-3 text-sm text-olive-800">
+              <p className="font-medium text-olive-900">הערות לטיפול</p>
+              <p className="mt-1 whitespace-pre-wrap">{selectedShift.notes}</p>
+            </div>
+          ) : null}
           {appointmentsLoading ? (
             <p className="text-olive-600">טוען משבצות...</p>
+          ) : appointments.length > 0 &&
+            appointments.every((slot) => slot.status === 'booked') ? (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+              <p className="font-semibold">כל המשבצות בטיפול זה תפוסות</p>
+              <p className="mt-2">
+                לא ניתן להירשם כרגע. נסו טיפול אחר, או פנו למנהל להוספת שעות / יום טיפול
+                נוסף.
+              </p>
+            </div>
           ) : (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {appointments.map((slot) => {

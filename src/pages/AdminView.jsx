@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ManageTreatments from '../components/ManageTreatments';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
+import TreatmentNotesField from '../components/TreatmentNotesField';
 import TreatmentTypeFields from '../components/TreatmentTypeFields';
 import { TREATMENT_TYPES } from '../constants/treatmentTypes';
 import { createShiftWithAppointments } from '../utils/shifts';
@@ -20,6 +21,7 @@ const emptyForm = {
   startTime: '08:00',
   endTime: '17:00',
   slotDuration: '30',
+  notes: '',
 };
 
 function isAuthenticated() {
@@ -194,6 +196,11 @@ export default function AdminView() {
           otherText={form.treatmentOther}
           onCategoryChange={(value) => setForm({ ...form, treatmentCategory: value })}
           onOtherChange={(value) => setForm({ ...form, treatmentOther: value })}
+        />
+
+        <TreatmentNotesField
+          value={form.notes}
+          onChange={(value) => setForm({ ...form, notes: value })}
         />
 
         <label className="block">

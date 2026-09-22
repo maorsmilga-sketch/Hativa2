@@ -10,6 +10,7 @@ import {
   countBookedAppointments,
 } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
+import TreatmentNotesField from './TreatmentNotesField';
 import TreatmentTypeFields from './TreatmentTypeFields';
 
 const SLOT_DURATIONS = [15, 20, 30, 45, 60];
@@ -22,6 +23,7 @@ const emptyShiftForm = () => ({
   startTime: '08:00',
   endTime: '17:00',
   slotDuration: '30',
+  notes: '',
 });
 
 function shiftToForm(shift) {
@@ -34,6 +36,7 @@ function shiftToForm(shift) {
     startTime: shift.startTime || '08:00',
     endTime: shift.endTime || '17:00',
     slotDuration: String(shift.slotDuration ?? 30),
+    notes: shift.notes || '',
   };
 }
 
@@ -158,6 +161,12 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     }
                   />
 
+                  <TreatmentNotesField
+                    id={`edit-notes-${editingId}`}
+                    value={editForm.notes}
+                    onChange={(value) => setEditForm({ ...editForm, notes: value })}
+                  />
+
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium">תאריך</span>
                     <input
@@ -246,6 +255,9 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     <p className="mt-1 text-xs text-olive-500">
                       {shift.startTime} – {shift.endTime} · משבצת {shift.slotDuration} דק׳
                     </p>
+                    {shift.notes ? (
+                      <p className="mt-2 line-clamp-2 text-xs text-olive-600">{shift.notes}</p>
+                    ) : null}
                   </div>
                   <button
                     type="button"

@@ -25,6 +25,7 @@ function buildShiftPayload(shiftData) {
     startTime,
     endTime,
     slotDuration,
+    notes,
   } = shiftData;
 
   return {
@@ -34,6 +35,7 @@ function buildShiftPayload(shiftData) {
     startTime,
     endTime,
     slotDuration: Number(slotDuration),
+    notes: (notes || '').trim(),
   };
 }
 
@@ -73,6 +75,23 @@ export async function fetchShifts() {
   return shifts;
 }
 
+export async function fetchShiftsWithAvailability() {
+  const shifts = await fetchShifts();
+  return Promise.all(
+    shifts.map(async (shift) => {
+      const appointments = await fetchAppointments(shift.id);
+      const availableSlots = appointments.filter((a) => a.status === 'available').length;
+      const totalSlots = appointments.length;
+      return {
+        ...shift,
+        availableSlots,
+        totalSlots,
+        isFull: totalSlots > 0 && availableSlots === 0,
+      };
+    }),
+  );
+}
+
 export async function countBookedAppointments(shiftId) {
   const appointments = await fetchAppointments(shiftId);
   return appointments.filter((a) => a.status === 'booked').length;
@@ -89,6 +108,7 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
       doctorName: payload.doctorName,
       treatmentType: payload.treatmentType,
       date: payload.date,
+      notes: payload.notes,
       startTime: current.startTime,
       endTime: current.endTime,
       slotDuration: current.slotDuration,

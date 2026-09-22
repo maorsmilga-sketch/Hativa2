@@ -18,7 +18,8 @@ service cloud.firestore {
         && request.resource.data.date is string
         && request.resource.data.startTime is string
         && request.resource.data.endTime is string
-        && request.resource.data.slotDuration is int;
+        && request.resource.data.slotDuration is int
+        && (!('notes' in request.resource.data) || request.resource.data.notes is string);
       allow create: if request.resource.data.keys().hasAll([
           'doctorName', 'treatmentType', 'date', 'startTime', 'endTime', 'slotDuration'
         ])
@@ -27,7 +28,8 @@ service cloud.firestore {
         && request.resource.data.date is string
         && request.resource.data.startTime is string
         && request.resource.data.endTime is string
-        && request.resource.data.slotDuration is int;
+        && request.resource.data.slotDuration is int
+        && (!('notes' in request.resource.data) || request.resource.data.notes is string);
 
       match /appointments/{appointmentId} {
         allow read: if true;
