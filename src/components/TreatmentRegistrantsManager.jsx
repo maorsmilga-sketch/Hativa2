@@ -3,7 +3,7 @@ import { BATTALIONS } from '../constants/battalions';
 import { displayTreatmentType } from '../constants/treatmentTypes';
 import {
   cancelBookedAppointment,
-  fetchAppointments,
+  fetchShiftScheduleWithPrivate,
   fetchShifts,
   updateBookedAppointment,
 } from '../utils/shifts';
@@ -73,8 +73,8 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
     setError('');
     setEditingId(null);
     try {
-      const appointments = await fetchAppointments(shiftId);
-      setBooked(appointments.filter((a) => a.status === 'booked'));
+      const schedule = await fetchShiftScheduleWithPrivate(shiftId);
+      setBooked(schedule.filter((a) => a.status === 'booked'));
     } catch (err) {
       console.error(err);
       setError('שגיאה בטעינת הנרשמים לטיפול');

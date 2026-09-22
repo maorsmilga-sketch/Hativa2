@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import AdminGuard from '../components/AdminGuard';
 import Layout from '../components/Layout';
+import { useAuth } from '../context/AuthContext';
 import ManageTreatments from '../components/ManageTreatments';
 import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManager';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
@@ -10,9 +12,6 @@ import RecurrenceFields from '../components/RecurrenceFields';
 import TreatmentTypeFields from '../components/TreatmentTypeFields';
 import { TREATMENT_TYPES } from '../constants/treatmentTypes';
 import { createShiftsFromForm } from '../utils/shifts';
-
-const ADMIN_PASSWORD = 'carmeli2026';
-const SESSION_KEY = 'carmeli_admin_auth';
 
 const SLOT_DURATIONS = [15, 20, 30, 45, 60];
 
@@ -31,14 +30,8 @@ const emptyForm = {
   recurrenceUntil: '',
 };
 
-function isAuthenticated() {
-  return sessionStorage.getItem(SESSION_KEY) === 'true';
-}
-
 export default function AdminView() {
-  const [authed, setAuthed] = useState(isAuthenticated);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const { user, signOutAdmin } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -48,17 +41,6 @@ export default function AdminView() {
   const bumpRefresh = () => {
     setRegistrantsRefresh((n) => n + 1);
     setTreatmentsRefresh((n) => n + 1);
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (passwordInput === ADMIN_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, 'true');
-      setAuthed(true);
-      setPasswordError('');
-    } else {
-      setPasswordError('סיסמה שגויה');
-    }
   };
 
   const handleShare = async () => {
@@ -142,42 +124,9 @@ export default function AdminView() {
     });
   };
 
-  if (!authed) {
-    return (
-      <Layout title="כניסת מנהל" subtitle="אזור מוגבל — חטיבת כרמלי">
-        <form
-          onSubmit={handleLogin}
-          className="mx-auto max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-md"
-        >
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-olive-800">סיסמה</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              className="w-full rounded-lg border border-olive-200 px-3 py-2.5 focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-            />
-          </label>
-          {passwordError ? (
-            <p className="text-sm text-red-600">{passwordError}</p>
-          ) : null}
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-olive-700 py-3 font-semibold text-white hover:bg-olive-800"
-          >
-            כניסה
-          </button>
-          <Link to="/" className="block text-center text-sm text-olive-600 underline">
-            חזרה לדף ההרשמה
-          </Link>
-        </form>
-      </Layout>
-    );
-  }
-
   return (
-    <Layout title="לוח בקרה — מנהל" subtitle="יצירה ועריכת טיפולים">
+    <AdminGuard>
+      <Layout title="לוח בקרה — מנהל" subtitle="יצירה ועריכת טיפולים">
       <div className="mb-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -192,6 +141,13 @@ export default function AdminView() {
         >
           דף חיילים
         </Link>
+        <button
+          type="button"
+          onClick={signOutAdmin}
+          className="rounded-xl border border-olive-300 px-4 py-2.5 text-sm font-medium text-olive-800"
+        >
+          התנתקות{user?.email ? ` (${user.email})` : ''}
+        </button>
       </div>
 
       {message.text ? (
@@ -325,6 +281,7 @@ export default function AdminView() {
         refreshToken={registrantsRefresh}
         onShareResult={handleTreatmentUpdated}
       />
-    </Layout>
+      </Layout>
+    </AdminGuard>
   );
 }

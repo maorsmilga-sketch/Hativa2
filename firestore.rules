@@ -1,10 +1,18 @@
 rules_version = '2';
 
-// חטיבת כרמלי — מערכת טיפולים (פיילוט, ללא Auth)
-// פרסמו קובץ זה ב-Firebase Console → Firestore → Rules
+// חטיבת כרמלי — משבצות ציבוריות + PII ב-private_bookings + מנהלים ב-Google Auth
+// החליפו את כתובות המייל ב-isAdmin() לפני Publish (חייב להתאים ל-VITE_ADMIN_EMAILS)
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email in [
+          'YOUR_ADMIN@gmail.com'
+        ];
+    }
 
     function isValidShift(data) {
       return data.keys().hasAll([
@@ -20,48 +28,87 @@ service cloud.firestore {
         && (!('breaks' in data) || data.breaks is list);
     }
 
-    function isSoldierRegistration(data) {
-      return data.personalNumber is string
-        && data.idNumber is string
-        && data.battalion is string
-        && data.fullName is string
+    function isPublicAppointment(data) {
+      return data.keys().hasAll(['startTime', 'endTime', 'status'])
+        && data.startTime is string
+        && data.endTime is string
+        && (data.status == 'available' || data.status == 'booked')
+        && !('personalNumber' in data)
+        && !('idNumber' in data)
+        && !('battalion' in data)
+        && !('fullName' in data)
+        && !('phone' in data)
+        && !('email' in data);
+    }
+
+    function isPrivateBooking(data) {
+      return data.keys().hasAll([
+          'shiftId', 'slotId', 'personalNumber', 'soldierName', 'phone', 'email'
+        ])
+        && data.shiftId is string
+        && data.slotId is string
+        && data.personalNumber is string
+        && data.soldierName is string
         && data.phone is string
-        && data.email is string;
+        && data.email is string
+        && (!('idNumber' in data) || data.idNumber is string)
+        && (!('battalion' in data) || data.battalion is string)
+        && (!('startTime' in data) || data.startTime is string)
+        && (!('endTime' in data) || data.endTime is string);
+    }
+
+    function slotIsAvailable(shiftId, slotId) {
+      return get(/databases/$(database)/documents/shifts/$(shiftId)/appointments/$(slotId)).data.status
+        == 'available';
     }
 
     match /shifts/{shiftId} {
       allow read: if true;
-      allow create: if isValidShift(request.resource.data);
-      allow update: if isValidShift(request.resource.data);
-      allow delete: if true;
+      allow create: if isAdmin() && isValidShift(request.resource.data);
+      allow update: if isAdmin() && isValidShift(request.resource.data);
+      allow delete: if isAdmin();
 
       match /appointments/{appointmentId} {
         allow read: if true;
-        allow create: if request.resource.data.keys().hasAll(['startTime', 'endTime', 'status'])
+
+        allow create: if isAdmin()
           && request.resource.data.status == 'available'
-          && request.resource.data.startTime is string
-          && request.resource.data.endTime is string;
-        allow delete: if true;
-        allow update: if
-          (resource.data.status == 'available'
-            && request.resource.data.status == 'booked'
-            && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly([
-                  'status', 'personalNumber', 'idNumber', 'battalion',
-                  'fullName', 'phone', 'email', 'bookedAt'
-                ])
-            && isSoldierRegistration(request.resource.data))
-          || (resource.data.status == 'booked'
+          && isPublicAppointment(request.resource.data);
+
+        allow delete: if isAdmin();
+
+        allow update: if (
+            resource.data.status == 'available'
             && request.resource.data.status == 'booked'
             && request.resource.data.startTime == resource.data.startTime
             && request.resource.data.endTime == resource.data.endTime
-            && isSoldierRegistration(request.resource.data))
-          || (resource.data.status == 'booked'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          )
+          || (
+            isAdmin()
+            && resource.data.status == 'booked'
             && request.resource.data.status == 'available'
             && request.resource.data.startTime == resource.data.startTime
             && request.resource.data.endTime == resource.data.endTime
-            && request.resource.data.keys().hasOnly(['startTime', 'endTime', 'status']));
+            && isPublicAppointment(request.resource.data)
+          )
+          || (
+            isAdmin()
+            && isPublicAppointment(request.resource.data)
+          );
       }
+    }
+
+    match /private_bookings/{bookingId} {
+      allow read: if isAdmin();
+
+      allow create: if isPrivateBooking(request.resource.data)
+        && bookingId == request.resource.data.shiftId + '_' + request.resource.data.slotId
+        && slotIsAvailable(request.resource.data.shiftId, request.resource.data.slotId);
+
+      allow update: if isAdmin() && isPrivateBooking(request.resource.data);
+
+      allow delete: if isAdmin();
     }
   }
 }

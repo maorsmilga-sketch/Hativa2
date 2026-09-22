@@ -8,10 +8,19 @@ import {
   serverTimestamp,
   runTransaction,
   updateDoc,
+  setDoc,
   deleteDoc,
   deleteField,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import {
+  PRIVATE_BOOKINGS_COLLECTION,
+  buildPrivateBookingPayload,
+  enrichAppointmentWithPrivate,
+  fetchAllPrivateBookings,
+  fetchPrivateBookingsByShiftId,
+  privateBookingRef,
+} from './privateBookings';
 import { resolveTreatmentType } from '../constants/treatmentTypes';
 import { normalizeBreaks } from './breaks';
 import { listWeeklyOccurrenceDates } from './recurrence';
@@ -215,9 +224,14 @@ export async function deleteShift(shiftId) {
   }
 
   const appointments = await fetchAppointments(shiftId);
+  const privateMap = await fetchPrivateBookingsByShiftId(shiftId);
   const batch = writeBatch(db);
   appointments.forEach((apt) => {
     batch.delete(doc(db, SHIFTS_COLLECTION, shiftId, 'appointments', apt.id));
+    const pb = privateMap.get(apt.id);
+    if (pb?.id) {
+      batch.delete(doc(db, PRIVATE_BOOKINGS_COLLECTION, pb.id));
+    }
   });
   batch.delete(doc(db, SHIFTS_COLLECTION, shiftId));
   try {
@@ -238,21 +252,58 @@ export async function fetchAppointments(shiftId) {
 
 export async function fetchBookedRegistrants() {
   const shifts = await fetchShifts();
+  const shiftById = new Map(shifts.map((s) => [s.id, s]));
+  const privateBookings = await fetchAllPrivateBookings();
   const registrants = [];
+
+  privateBookings.forEach((pb) => {
+    const shift = shiftById.get(pb.shiftId);
+    if (!shift) return;
+    registrants.push({
+      id: pb.slotId,
+      shiftId: pb.shiftId,
+      shiftDate: shift.date,
+      doctorName: shift.doctorName,
+      treatmentType: shift.treatmentType,
+      startTime: pb.startTime || '',
+      endTime: pb.endTime || '',
+      personalNumber: pb.personalNumber,
+      fullName: pb.soldierName || pb.fullName || '',
+      phone: pb.phone,
+      email: pb.email,
+      idNumber: pb.idNumber,
+      battalion: pb.battalion,
+      status: 'booked',
+    });
+  });
 
   await Promise.all(
     shifts.map(async (shift) => {
       const appointments = await fetchAppointments(shift.id);
+      const privateMap = await fetchPrivateBookingsByShiftId(shift.id);
       appointments.forEach((apt) => {
         if (apt.status !== 'booked') return;
+        if (privateMap.has(apt.id)) return;
         registrants.push({
-          ...apt,
+          ...enrichAppointmentWithPrivate(apt, privateMap),
           shiftId: shift.id,
           shiftDate: shift.date,
           doctorName: shift.doctorName,
           treatmentType: shift.treatmentType,
         });
       });
+    }),
+  );
+
+  await Promise.all(
+    registrants.map(async (entry) => {
+      if (entry.startTime) return;
+      const appointments = await fetchAppointments(entry.shiftId);
+      const apt = appointments.find((a) => a.id === entry.id);
+      if (apt) {
+        entry.startTime = apt.startTime;
+        entry.endTime = apt.endTime;
+      }
     }),
   );
 
@@ -265,25 +316,27 @@ export async function fetchBookedRegistrants() {
   return registrants;
 }
 
+/** Admin: public slots joined with private_bookings PII */
+export async function fetchShiftScheduleWithPrivate(shiftId) {
+  const [appointments, privateMap] = await Promise.all([
+    fetchAppointments(shiftId),
+    fetchPrivateBookingsByShiftId(shiftId),
+  ]);
+  return appointments.map((apt) => enrichAppointmentWithPrivate(apt, privateMap));
+}
+
 export async function updateBookedAppointment(shiftId, appointmentId, soldierDetails) {
-  const appointmentRef = doc(
-    db,
-    SHIFTS_COLLECTION,
-    shiftId,
-    'appointments',
-    appointmentId,
-  );
+  const bookingRef = privateBookingRef(shiftId, appointmentId);
 
   try {
-    await updateDoc(appointmentRef, {
-      status: 'booked',
-      personalNumber: soldierDetails.personalNumber,
-      idNumber: soldierDetails.idNumber,
-      battalion: soldierDetails.battalion,
-      fullName: soldierDetails.fullName,
-      phone: soldierDetails.phone,
-      email: soldierDetails.email || '',
-    });
+    await setDoc(
+      bookingRef,
+      {
+        ...buildPrivateBookingPayload(shiftId, appointmentId, soldierDetails),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
   } catch (err) {
     throw new Error(formatFirestoreError(err));
   }
@@ -297,17 +350,24 @@ export async function cancelBookedAppointment(shiftId, appointmentId) {
     'appointments',
     appointmentId,
   );
+  const bookingRef = privateBookingRef(shiftId, appointmentId);
 
   try {
-    await updateDoc(appointmentRef, {
-      status: 'available',
-      personalNumber: deleteField(),
-      idNumber: deleteField(),
-      battalion: deleteField(),
-      fullName: deleteField(),
-      phone: deleteField(),
-      email: deleteField(),
-      bookedAt: deleteField(),
+    await runTransaction(db, async (transaction) => {
+      const pbSnap = await transaction.get(bookingRef);
+      transaction.update(appointmentRef, {
+        status: 'available',
+        personalNumber: deleteField(),
+        idNumber: deleteField(),
+        battalion: deleteField(),
+        fullName: deleteField(),
+        phone: deleteField(),
+        email: deleteField(),
+        bookedAt: deleteField(),
+      });
+      if (pbSnap.exists()) {
+        transaction.delete(bookingRef);
+      }
     });
   } catch (err) {
     throw new Error(formatFirestoreError(err));
@@ -322,6 +382,7 @@ export async function bookAppointment(shiftId, appointmentId, soldierDetails) {
     'appointments',
     appointmentId,
   );
+  const bookingRef = privateBookingRef(shiftId, appointmentId);
 
   await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(appointmentRef);
@@ -333,14 +394,11 @@ export async function bookAppointment(shiftId, appointmentId, soldierDetails) {
       throw new Error('המשבצת כבר תפוסה');
     }
 
-    transaction.update(appointmentRef, {
-      status: 'booked',
-      personalNumber: soldierDetails.personalNumber,
-      idNumber: soldierDetails.idNumber,
-      battalion: soldierDetails.battalion,
-      fullName: soldierDetails.fullName,
-      phone: soldierDetails.phone,
-      email: soldierDetails.email || '',
+    transaction.update(appointmentRef, { status: 'booked' });
+    transaction.set(bookingRef, {
+      ...buildPrivateBookingPayload(shiftId, appointmentId, soldierDetails),
+      startTime: data.startTime,
+      endTime: data.endTime,
       bookedAt: serverTimestamp(),
     });
   });
