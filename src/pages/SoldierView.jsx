@@ -6,6 +6,7 @@ import { fetchShifts, fetchAppointments, bookAppointment } from '../utils/shifts
 import { formatHebrewDate } from '../utils/timeSlots';
 
 import { BATTALIONS } from '../constants/battalions';
+import { displayTreatmentType } from '../constants/treatmentTypes';
 
 const emptyRegistrationForm = () => ({
   personalNumber: '',
@@ -15,10 +16,6 @@ const emptyRegistrationForm = () => ({
   phone: '',
   email: '',
 });
-
-function treatmentDisplay(type) {
-  return type || 'טיפול';
-}
 
 export default function SoldierView() {
   const [step, setStep] = useState(1);
@@ -170,7 +167,7 @@ export default function SoldierView() {
                     </p>
                     <p className="mt-1 text-olive-700">{shift.doctorName}</p>
                     <p className="text-sm text-olive-600">
-                      {treatmentDisplay(shift.treatmentType)}
+                      {displayTreatmentType(shift.treatmentType)}
                     </p>
                     <p className="mt-2 text-xs text-olive-500">
                       {shift.startTime} – {shift.endTime}

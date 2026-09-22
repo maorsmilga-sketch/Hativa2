@@ -3,32 +3,52 @@ import {
   addDoc,
   doc,
   getDocs,
+  getDoc,
   writeBatch,
   serverTimestamp,
   runTransaction,
+  updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { resolveTreatmentType } from '../constants/treatmentTypes';
 import { generateTimeSlots } from './timeSlots';
 
 const SHIFTS_COLLECTION = 'shifts';
 
-export async function createShiftWithAppointments(shiftData) {
-  const { doctorName, treatmentType, date, startTime, endTime, slotDuration } =
-    shiftData;
+function buildShiftPayload(shiftData) {
+  const {
+    doctorName,
+    treatmentCategory,
+    treatmentOther,
+    date,
+    startTime,
+    endTime,
+    slotDuration,
+  } = shiftData;
 
-  const slots = generateTimeSlots(startTime, endTime, Number(slotDuration));
+  return {
+    doctorName,
+    treatmentType: resolveTreatmentType(treatmentCategory, treatmentOther),
+    date,
+    startTime,
+    endTime,
+    slotDuration: Number(slotDuration),
+  };
+}
+
+export async function createShiftWithAppointments(shiftData) {
+  const payload = buildShiftPayload(shiftData);
+  const { startTime, endTime, slotDuration } = payload;
+
+  const slots = generateTimeSlots(startTime, endTime, slotDuration);
 
   if (slots.length === 0) {
     throw new Error('לא נוצרו משבצות — בדקו שעות התחלה/סיום ומשך המשבצת בטיפול');
   }
 
   const shiftRef = await addDoc(collection(db, SHIFTS_COLLECTION), {
-    doctorName,
-    treatmentType,
-    date,
-    startTime,
-    endTime,
-    slotDuration: Number(slotDuration),
+    ...payload,
     createdAt: serverTimestamp(),
   });
 
@@ -51,6 +71,52 @@ export async function fetchShifts() {
     return (a.startTime || '').localeCompare(b.startTime || '');
   });
   return shifts;
+}
+
+export async function countBookedAppointments(shiftId) {
+  const appointments = await fetchAppointments(shiftId);
+  return appointments.filter((a) => a.status === 'booked').length;
+}
+
+export async function updateShiftWithAppointments(shiftId, shiftData) {
+  const payload = buildShiftPayload(shiftData);
+  const bookedCount = await countBookedAppointments(shiftId);
+
+  if (bookedCount > 0) {
+    const currentSnap = await getDoc(doc(db, SHIFTS_COLLECTION, shiftId));
+    const current = currentSnap.data() || {};
+    await updateDoc(doc(db, SHIFTS_COLLECTION, shiftId), {
+      doctorName: payload.doctorName,
+      treatmentType: payload.treatmentType,
+      date: payload.date,
+      startTime: current.startTime,
+      endTime: current.endTime,
+      slotDuration: current.slotDuration,
+      updatedAt: serverTimestamp(),
+    });
+    return { scheduleLocked: true };
+  }
+
+  const appointments = await fetchAppointments(shiftId);
+  const slots = generateTimeSlots(payload.startTime, payload.endTime, payload.slotDuration);
+  if (slots.length === 0) {
+    throw new Error('לא נוצרו משבצות — בדקו שעות ומשך משבצת');
+  }
+
+  const batch = writeBatch(db);
+  appointments.forEach((apt) => {
+    batch.delete(doc(db, SHIFTS_COLLECTION, shiftId, 'appointments', apt.id));
+  });
+  slots.forEach((slot) => {
+    const appointmentRef = doc(collection(db, SHIFTS_COLLECTION, shiftId, 'appointments'));
+    batch.set(appointmentRef, slot);
+  });
+  batch.update(doc(db, SHIFTS_COLLECTION, shiftId), {
+    ...payload,
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+  return { scheduleLocked: false };
 }
 
 export async function fetchAppointments(shiftId) {

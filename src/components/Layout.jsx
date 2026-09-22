@@ -8,9 +8,9 @@ function BrigadeLogo() {
       src={src}
       alt=""
       aria-hidden="true"
-      className="h-12 w-12 shrink-0 object-contain drop-shadow sm:h-14 sm:w-14"
-      width={56}
-      height={56}
+      className="h-16 w-16 shrink-0 object-contain drop-shadow sm:h-[4.5rem] sm:w-[4.5rem]"
+      width={72}
+      height={72}
       onError={() => {
         if (src !== '/logo.svg') setSrc('/logo.svg');
       }}

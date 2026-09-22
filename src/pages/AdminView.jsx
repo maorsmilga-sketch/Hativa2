@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import ManageTreatments from '../components/ManageTreatments';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
+import TreatmentTypeFields from '../components/TreatmentTypeFields';
+import { TREATMENT_TYPES } from '../constants/treatmentTypes';
 import { createShiftWithAppointments } from '../utils/shifts';
 
 const ADMIN_PASSWORD = 'carmeli2026';
@@ -9,18 +12,10 @@ const SESSION_KEY = 'carmeli_admin_auth';
 
 const SLOT_DURATIONS = [15, 20, 30, 45, 60];
 
-const TREATMENT_TYPES = [
-  'אורתופדיה',
-  'עיסוי',
-  'פיזיותרפיה',
-  'רפואה משלימה',
-  'פסיכולוגיה',
-  'אחר',
-];
-
 const emptyForm = {
   doctorName: '',
-  treatmentType: TREATMENT_TYPES[0],
+  treatmentCategory: TREATMENT_TYPES[0],
+  treatmentOther: '',
   date: '',
   startTime: '08:00',
   endTime: '17:00',
@@ -39,6 +34,12 @@ export default function AdminView() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [registrantsRefresh, setRegistrantsRefresh] = useState(0);
+  const [treatmentsRefresh, setTreatmentsRefresh] = useState(0);
+
+  const bumpRefresh = () => {
+    setRegistrantsRefresh((n) => n + 1);
+    setTreatmentsRefresh((n) => n + 1);
+  };
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function AdminView() {
         text: `הטיפול נוצר בהצלחה (${shiftId.slice(0, 8)}…). המשבצות נשמרו ב-Firestore.`,
       });
       setForm(emptyForm);
-      setRegistrantsRefresh((n) => n + 1);
+      bumpRefresh();
     } catch (err) {
       console.error(err);
       setMessage({
@@ -94,6 +95,16 @@ export default function AdminView() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleTreatmentUpdated = (result) => {
+    bumpRefresh();
+    setMessage({
+      type: 'success',
+      text: result?.scheduleLocked
+        ? 'הטיפול עודכן (שעות ומשבצות נשארו ללא שינוי בגלל נרשמים קיימים).'
+        : 'הטיפול עודכן בהצלחה.',
+    });
   };
 
   if (!authed) {
@@ -131,7 +142,7 @@ export default function AdminView() {
   }
 
   return (
-    <Layout title="לוח בקרה — מנהל" subtitle="יצירת טיפולים">
+    <Layout title="לוח בקרה — מנהל" subtitle="יצירה ועריכת טיפולים">
       <div className="mb-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -178,20 +189,12 @@ export default function AdminView() {
           />
         </label>
 
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">סוג טיפול</span>
-          <select
-            className="w-full rounded-lg border border-olive-200 px-3 py-2.5 focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
-            value={form.treatmentType}
-            onChange={(e) => setForm({ ...form, treatmentType: e.target.value })}
-          >
-            {TREATMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+        <TreatmentTypeFields
+          category={form.treatmentCategory}
+          otherText={form.treatmentOther}
+          onCategoryChange={(value) => setForm({ ...form, treatmentCategory: value })}
+          onOtherChange={(value) => setForm({ ...form, treatmentOther: value })}
+        />
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">תאריך</span>
@@ -250,6 +253,8 @@ export default function AdminView() {
           {submitting ? 'יוצר טיפול...' : 'יצירת טיפול ומשבצות'}
         </button>
       </form>
+
+      <ManageTreatments refreshToken={treatmentsRefresh} onUpdated={handleTreatmentUpdated} />
 
       <RegistrantsByBattalion refreshToken={registrantsRefresh} />
     </Layout>
