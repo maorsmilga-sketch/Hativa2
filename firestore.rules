@@ -100,6 +100,22 @@ service cloud.firestore {
       }
     }
 
+    function isValidRoutineUpdate(data) {
+      return data.keys().hasAll(['title', 'description'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.description is string
+        && data.description.size() > 0
+        && (!('sortOrder' in data) || data.sortOrder is int);
+    }
+
+    match /routine_updates/{updateId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidRoutineUpdate(request.resource.data);
+      allow update: if isAdmin() && isValidRoutineUpdate(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
     match /private_bookings/{bookingId} {
       allow read: if isAdmin();
 

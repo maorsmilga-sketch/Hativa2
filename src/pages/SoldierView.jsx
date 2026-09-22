@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import HeaderScheduleChangeNotice from '../components/HeaderScheduleChangeNotice';
 import Layout from '../components/Layout';
 import SiteFooter from '../components/SiteFooter';
@@ -125,8 +126,18 @@ export default function SoldierView() {
       title="מערכת טיפולים ושיקום"
       subtitle="הרשמה לטיפולים — לוחמי וחיילי חטיבת כרמלי"
       headerNotice={<HeaderScheduleChangeNotice />}
+      showAdminLink
     >
       <StepIndicator currentStep={step} onStepClick={handleStepIndicatorClick} />
+
+      {step === 1 ? (
+        <Link
+          to="/routine"
+          className="mb-4 flex w-full items-center justify-center rounded-xl border border-sky-700/30 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-950 shadow-sm transition hover:bg-sky-100 active:scale-[0.99]"
+        >
+          רפואת שגרה — עדכונים
+        </Link>
+      ) : null}
 
       {successMessage ? (
         <div

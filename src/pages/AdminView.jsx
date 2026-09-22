@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AdminGuard from '../components/AdminGuard';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
+import ManageRoutineUpdates from '../components/ManageRoutineUpdates';
 import ManageTreatments from '../components/ManageTreatments';
 import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManager';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
@@ -108,6 +109,10 @@ export default function AdminView() {
     if (result?.registrantsUpdated) {
       bumpRefresh();
       setMessage({ type: 'success', text: 'רשימת הנרשמים עודכנה.' });
+      return;
+    }
+    if (result?.routineUpdated) {
+      setMessage({ type: 'success', text: 'עדכוני רפואת שגרה נשמרו.' });
       return;
     }
     if (result?.shared === 'registrants-copied') {
@@ -285,6 +290,8 @@ export default function AdminView() {
               : 'יצירת טיפול ומשבצות'}
         </button>
       </form>
+
+      <ManageRoutineUpdates refreshToken={treatmentsRefresh} onChanged={handleTreatmentUpdated} />
 
       <ManageTreatments refreshToken={treatmentsRefresh} onUpdated={handleTreatmentUpdated} />
 
