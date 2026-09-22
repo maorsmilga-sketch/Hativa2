@@ -17,6 +17,16 @@ npm run dev
 
 פתחו `http://localhost:5173` — דף חיילים (`/`) או מנהל (`/admin`).
 
+## תצוגה מקדימה ב-WhatsApp (לוגו)
+
+WhatsApp מציג **תצוגה מקדימה של הקישור** לפי תגיות Open Graph. הלוגו מוגדר כ-`og:image` → `public/logo.png`.
+
+1. ב-Vercel הוסיפו **Environment Variable**: `VITE_SITE_URL` = כתובת האתר (למשל `https://hativa2.vercel.app`) **בלי** סלאש בסוף.
+2. **Redeploy** (חובה — התגיות נבנות ב-build).
+3. WhatsApp **שומר cache** — אם הלוגו לא מתעדכן, נסו [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) עם כתובת האתר ולחצו Scrape Again.
+
+> «שיתוף טיפול» שולח **קישור + טקst**; התמונה ב-WhatsApp מגיעה מהתצוגה המקדימה של הדף, לא מהקובץ המצורף לשיתוף.
+
 ## לוגו (חובה לפריסה)
 
 האתר מחפש **`public/logo.png`**. הקובץ חייב להיות בתיקייה `public/` (לא בשורש הריפo) ולהיכנס ל-Git:
