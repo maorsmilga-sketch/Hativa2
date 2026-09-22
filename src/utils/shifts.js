@@ -84,6 +84,8 @@ export async function bookAppointment(shiftId, appointmentId, soldierDetails) {
     transaction.update(appointmentRef, {
       status: 'booked',
       personalNumber: soldierDetails.personalNumber,
+      idNumber: soldierDetails.idNumber,
+      battalion: soldierDetails.battalion,
       fullName: soldierDetails.fullName,
       phone: soldierDetails.phone,
       email: soldierDetails.email || '',

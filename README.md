@@ -80,7 +80,7 @@ npm run dev
 ## מבנה נתונים
 
 - `shifts/{shiftId}` — פרטי משמרת (מטפל, סוג טיפול, תאריך, שעות, משך משבצת)
-- `shifts/{shiftId}/appointments/{slotId}` — משבצות עם `status`: `available` | `booked` ופרטי חייל לאחר הרשמה
+- `shifts/{shiftId}/appointments/{slotId}` — משבצות עם `status`: `available` | `booked` ופרטי חייל לאחר הרשמה (`personalNumber`, `idNumber`, `battalion`, `fullName`, `phone`, `email`)
 
 ## מסכים
 

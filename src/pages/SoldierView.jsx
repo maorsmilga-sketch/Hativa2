@@ -4,6 +4,24 @@ import StepIndicator from '../components/StepIndicator';
 import { fetchShifts, fetchAppointments, bookAppointment } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
 
+const BATTALIONS = [
+  'מפח"ט',
+  'גדוד 222',
+  'גדוד 223',
+  'גדוד 221',
+  'גדס"ם',
+  'גדוד 224',
+];
+
+const emptyRegistrationForm = () => ({
+  personalNumber: '',
+  idNumber: '',
+  battalion: '',
+  fullName: '',
+  phone: '',
+  email: '',
+});
+
 function treatmentDisplay(type) {
   return type || 'טיפול';
 }
@@ -19,12 +37,7 @@ export default function SoldierView() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [form, setForm] = useState({
-    personalNumber: '',
-    fullName: '',
-    phone: '',
-    email: '',
-  });
+  const [form, setForm] = useState(emptyRegistrationForm);
 
   const loadShifts = useCallback(async () => {
     setLoading(true);
@@ -49,7 +62,7 @@ export default function SoldierView() {
     setSelectedShift(null);
     setSelectedSlot(null);
     setAppointments([]);
-    setForm({ personalNumber: '', fullName: '', phone: '', email: '' });
+    setForm(emptyRegistrationForm());
     loadShifts();
   };
 
@@ -229,6 +242,45 @@ export default function SoldierView() {
                 value={form.personalNumber}
                 onChange={(e) => setForm({ ...form, personalNumber: e.target.value })}
               />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-olive-800">
+                מספר ת.ז. <span className="text-red-600">*</span>
+              </span>
+              <input
+                required
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={9}
+                pattern="[0-9]{5,9}"
+                title="הזינו מספר תעודת זהות (ספרות בלבד)"
+                className="w-full rounded-lg border border-olive-200 px-3 py-2.5 focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
+                value={form.idNumber}
+                onChange={(e) =>
+                  setForm({ ...form, idNumber: e.target.value.replace(/\D/g, '') })
+                }
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-olive-800">
+                גדוד <span className="text-red-600">*</span>
+              </span>
+              <select
+                required
+                className="w-full rounded-lg border border-olive-200 px-3 py-2.5 focus:border-olive-600 focus:outline-none focus:ring-2 focus:ring-olive-300"
+                value={form.battalion}
+                onChange={(e) => setForm({ ...form, battalion: e.target.value })}
+              >
+                <option value="" disabled>
+                  בחרו גדוד
+                </option>
+                {BATTALIONS.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-olive-800">
