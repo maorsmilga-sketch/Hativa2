@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ManageTreatments from '../components/ManageTreatments';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
+import BreakPeriodsField from '../components/BreakPeriodsField';
 import TreatmentNotesField from '../components/TreatmentNotesField';
 import TreatmentTypeFields from '../components/TreatmentTypeFields';
 import { TREATMENT_TYPES } from '../constants/treatmentTypes';
@@ -22,6 +23,7 @@ const emptyForm = {
   endTime: '17:00',
   slotDuration: '30',
   notes: '',
+  breaks: [],
 };
 
 function isAuthenticated() {
@@ -103,6 +105,20 @@ export default function AdminView() {
     bumpRefresh();
     if (result?.deleted) {
       setMessage({ type: 'success', text: 'הטיפול נמחק בהצלחה.' });
+      return;
+    }
+    if (result?.shared === 'treatment-copied') {
+      setMessage({
+        type: 'success',
+        text: 'פרטי הטיפול הועתקו ללוח — ניתן להדביק ב-WhatsApp',
+      });
+      return;
+    }
+    if (result?.shared === 'registrants-copied') {
+      setMessage({
+        type: 'success',
+        text: 'רשימת הנרשמים הועתקה ללוח — ניתן להדביק ב-WhatsApp',
+      });
       return;
     }
     setMessage({
@@ -218,6 +234,11 @@ export default function AdminView() {
           />
         </label>
 
+        <BreakPeriodsField
+          breaks={form.breaks}
+          onChange={(breaks) => setForm({ ...form, breaks })}
+        />
+
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1 block text-sm font-medium">שעת התחלה</span>
@@ -267,7 +288,10 @@ export default function AdminView() {
 
       <ManageTreatments refreshToken={treatmentsRefresh} onUpdated={handleTreatmentUpdated} />
 
-      <RegistrantsByBattalion refreshToken={registrantsRefresh} />
+      <RegistrantsByBattalion
+        refreshToken={registrantsRefresh}
+        onShareResult={handleTreatmentUpdated}
+      />
     </Layout>
   );
 }

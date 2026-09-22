@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { resolveTreatmentType } from '../constants/treatmentTypes';
+import { normalizeBreaks } from './breaks';
 import { generateTimeSlots } from './timeSlots';
 
 const SHIFTS_COLLECTION = 'shifts';
@@ -34,6 +35,7 @@ function buildShiftPayload(shiftData) {
     endTime,
     slotDuration,
     notes,
+    breaks,
   } = shiftData;
 
   return {
@@ -44,6 +46,7 @@ function buildShiftPayload(shiftData) {
     endTime,
     slotDuration: Number(slotDuration),
     notes: (notes || '').trim(),
+    breaks: normalizeBreaks(breaks),
   };
 }
 
@@ -51,7 +54,7 @@ export async function createShiftWithAppointments(shiftData) {
   const payload = buildShiftPayload(shiftData);
   const { startTime, endTime, slotDuration } = payload;
 
-  const slots = generateTimeSlots(startTime, endTime, slotDuration);
+  const slots = generateTimeSlots(startTime, endTime, slotDuration, payload.breaks);
 
   if (slots.length === 0) {
     throw new Error('לא נוצרו משבצות — בדקו שעות התחלה/סיום ומשך המשבצת בטיפול');
@@ -118,6 +121,7 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
         treatmentType: payload.treatmentType,
         date: payload.date,
         notes: payload.notes,
+        breaks: normalizeBreaks(current.breaks || payload.breaks),
         startTime: current.startTime || payload.startTime,
         endTime: current.endTime || payload.endTime,
         slotDuration: Number(current.slotDuration ?? payload.slotDuration),
@@ -130,7 +134,12 @@ export async function updateShiftWithAppointments(shiftId, shiftData) {
   }
 
   const appointments = await fetchAppointments(shiftId);
-  const slots = generateTimeSlots(payload.startTime, payload.endTime, payload.slotDuration);
+  const slots = generateTimeSlots(
+    payload.startTime,
+    payload.endTime,
+    payload.slotDuration,
+    payload.breaks,
+  );
   if (slots.length === 0) {
     throw new Error('לא נוצרו משבצות — בדקו שעות ומשך משבצת');
   }

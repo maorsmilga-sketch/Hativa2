@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BATTALIONS, UNKNOWN_BATTALION } from '../constants/battalions';
 import { fetchBookedRegistrants } from '../utils/shifts';
 import { downloadRegistrantsExcel } from '../utils/exportRegistrants';
+import { buildRegistrantsShareBody, shareText } from '../utils/share';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 function battalionKey(battalion) {
@@ -33,7 +34,7 @@ function groupRegistrants(registrants) {
   return orderedKeys.map((name) => ({ name, entries: map.get(name) }));
 }
 
-export default function RegistrantsByBattalion({ refreshToken = 0 }) {
+export default function RegistrantsByBattalion({ refreshToken = 0, onShareResult }) {
   const [registrants, setRegistrants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,11 +59,33 @@ export default function RegistrantsByBattalion({ refreshToken = 0 }) {
 
   const groups = useMemo(() => groupRegistrants(registrants), [registrants]);
 
+  const handleShareRegistrants = async () => {
+    try {
+      const body = buildRegistrantsShareBody(registrants, groups);
+      const result = await shareText({
+        title: 'רשימת נרשמים — חטיבת כרמלי',
+        body,
+      });
+      if (result === 'copied') onShareResult?.({ shared: 'registrants-copied' });
+    } catch (err) {
+      console.error(err);
+      setError('לא ניתן לשתף את רשימת הנרשמים כרגע');
+    }
+  };
+
   return (
     <section className="mt-8 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-olive-800">נרשמים לפי גדוד</h2>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleShareRegistrants}
+            disabled={loading || registrants.length === 0}
+            className="rounded-lg border border-olive-600 bg-white px-3 py-1.5 text-sm font-medium text-olive-900 hover:bg-olive-50 disabled:opacity-60"
+          >
+            שיתוף רשימה
+          </button>
           <button
             type="button"
             onClick={() => downloadRegistrantsExcel(registrants)}

@@ -11,8 +11,11 @@ import {
   countBookedAppointments,
 } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
+import BreakPeriodsField from './BreakPeriodsField';
 import TreatmentNotesField from './TreatmentNotesField';
 import TreatmentTypeFields from './TreatmentTypeFields';
+import { formatBreaksSummary } from '../utils/breaks';
+import { buildTreatmentShareBody, shareText } from '../utils/share';
 
 const SLOT_DURATIONS = [15, 20, 30, 45, 60];
 
@@ -25,6 +28,7 @@ const emptyShiftForm = () => ({
   endTime: '17:00',
   slotDuration: '30',
   notes: '',
+  breaks: [],
 });
 
 function shiftToForm(shift) {
@@ -38,6 +42,7 @@ function shiftToForm(shift) {
     endTime: shift.endTime || '17:00',
     slotDuration: String(shift.slotDuration ?? 30),
     notes: shift.notes || '',
+    breaks: Array.isArray(shift.breaks) ? shift.breaks : [],
   };
 }
 
@@ -84,6 +89,24 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
     setEditingId(null);
     setEditForm(emptyShiftForm());
     setBookedCount(0);
+  };
+
+  const handleShareTreatment = async (shift) => {
+    const url = `${window.location.origin}/`;
+    try {
+      const result = await shareText({
+        title: 'חטיבת כרמלי — הרשמה לטיפול',
+        body: buildTreatmentShareBody(shift),
+        url,
+      });
+      if (result === 'copied') {
+        setError('');
+        onUpdated?.({ shared: 'treatment-copied' });
+      }
+    } catch (err) {
+      console.error(err);
+      setError('לא ניתן לשתף את פרטי הטיפול כרגע');
+    }
   };
 
   const handleDelete = async (shift) => {
@@ -201,6 +224,12 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     />
                   </label>
 
+                  <BreakPeriodsField
+                    breaks={editForm.breaks}
+                    disabled={scheduleLocked}
+                    onChange={(breaks) => setEditForm({ ...editForm, breaks })}
+                  />
+
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block">
                       <span className="mb-1 block text-sm font-medium">שעת התחלה</span>
@@ -278,11 +307,23 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     <p className="mt-1 text-xs text-olive-500">
                       {shift.startTime} – {shift.endTime} · משבצת {shift.slotDuration} דק׳
                     </p>
+                    {formatBreaksSummary(shift.breaks) ? (
+                      <p className="mt-1 text-xs text-olive-500">
+                        הפסקות: {formatBreaksSummary(shift.breaks)}
+                      </p>
+                    ) : null}
                     {shift.notes ? (
                       <p className="mt-2 line-clamp-2 text-xs text-olive-600">{shift.notes}</p>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleShareTreatment(shift)}
+                      className="rounded-lg border border-olive-600 bg-olive-50 px-3 py-2 text-sm font-medium text-olive-900 hover:bg-olive-100"
+                    >
+                      שיתוף טיפול
+                    </button>
                     <button
                       type="button"
                       onClick={() => startEdit(shift)}

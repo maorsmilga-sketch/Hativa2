@@ -7,6 +7,7 @@ import {
   fetchAppointments,
   bookAppointment,
 } from '../utils/shifts';
+import { formatBreaksSummary } from '../utils/breaks';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 import { BATTALIONS } from '../constants/battalions';
@@ -226,6 +227,12 @@ export default function SoldierView() {
           <p className="mb-4 text-sm text-olive-600">
             {selectedShift.doctorName} · {formatHebrewDate(selectedShift.date)}
           </p>
+          {formatBreaksSummary(selectedShift.breaks) ? (
+            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-medium">הפסקות מטפל (לא ניתן להירשם)</p>
+              <p className="mt-1">{formatBreaksSummary(selectedShift.breaks)}</p>
+            </div>
+          ) : null}
           {selectedShift.notes ? (
             <div className="mb-4 rounded-xl border border-olive-200 bg-olive-50 px-4 py-3 text-sm text-olive-800">
               <p className="font-medium text-olive-900">הערות לטיפול</p>

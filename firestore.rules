@@ -16,7 +16,8 @@ service cloud.firestore {
         && data.startTime is string
         && data.endTime is string
         && data.slotDuration is int
-        && (!('notes' in data) || data.notes is string);
+        && (!('notes' in data) || data.notes is string)
+        && (!('breaks' in data) || data.breaks is list);
     }
 
     match /shifts/{shiftId} {
