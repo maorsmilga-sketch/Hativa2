@@ -10,6 +10,7 @@ import {
   deleteShift,
   countBookedAppointments,
 } from '../utils/shifts';
+import { weekdayLabel } from '../utils/recurrence';
 import { formatHebrewDate } from '../utils/timeSlots';
 import BreakPeriodsField from './BreakPeriodsField';
 import TreatmentNotesField from './TreatmentNotesField';
@@ -299,7 +300,20 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                   <div className="min-w-0 text-sm">
                     <p className="font-semibold text-olive-900">
                       {formatHebrewDate(shift.date)}
+                      {shift.isRecurring ? (
+                        <span className="mr-2 inline-block rounded-full bg-olive-200 px-2 py-0.5 text-xs font-medium text-olive-800">
+                          מחזורי
+                        </span>
+                      ) : null}
                     </p>
+                    {shift.isRecurring && shift.recurrenceWeekday != null ? (
+                      <p className="text-xs text-olive-500">
+                        {weekdayLabel(shift.recurrenceWeekday)}
+                        {shift.recurrenceUntil
+                          ? ` · עד ${formatHebrewDate(shift.recurrenceUntil)}`
+                          : ''}
+                      </p>
+                    ) : null}
                     <p className="text-olive-700">{shift.doctorName}</p>
                     <p className="text-olive-600">
                       {displayTreatmentType(shift.treatmentType)}

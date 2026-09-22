@@ -14,6 +14,7 @@ import {
 import { db } from '../firebase/config';
 import { resolveTreatmentType } from '../constants/treatmentTypes';
 import { normalizeBreaks } from './breaks';
+import { listWeeklyOccurrenceDates } from './recurrence';
 import { generateTimeSlots } from './timeSlots';
 
 const SHIFTS_COLLECTION = 'shifts';
@@ -51,7 +52,7 @@ function buildShiftPayload(shiftData) {
   };
 }
 
-export async function createShiftWithAppointments(shiftData) {
+export async function createShiftWithAppointments(shiftData, recurrenceMeta = null) {
   const payload = buildShiftPayload(shiftData);
   const { startTime, endTime, slotDuration } = payload;
 
@@ -63,6 +64,7 @@ export async function createShiftWithAppointments(shiftData) {
 
   const shiftRef = await addDoc(collection(db, SHIFTS_COLLECTION), {
     ...payload,
+    ...(recurrenceMeta || {}),
     createdAt: serverTimestamp(),
   });
 
@@ -74,6 +76,45 @@ export async function createShiftWithAppointments(shiftData) {
   await batch.commit();
 
   return shiftRef.id;
+}
+
+export async function createShiftsFromForm(formData) {
+  const {
+    recurrenceEnabled,
+    recurrenceWeekday,
+    recurrenceUntil,
+    ...baseForm
+  } = formData;
+
+  if (!recurrenceEnabled) {
+    const id = await createShiftWithAppointments(baseForm);
+    return { count: 1, ids: [id] };
+  }
+
+  if (!recurrenceUntil) {
+    throw new Error('יש לבחור תאריך סיום לטיפול המחזורי');
+  }
+
+  const dates = listWeeklyOccurrenceDates(baseForm.date, recurrenceUntil, recurrenceWeekday);
+  const groupId =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `rec-${Date.now()}`;
+
+  const meta = {
+    recurrenceGroupId: groupId,
+    recurrenceWeekday,
+    recurrenceUntil,
+    isRecurring: true,
+  };
+
+  const ids = [];
+  for (const date of dates) {
+    const id = await createShiftWithAppointments({ ...baseForm, date }, meta);
+    ids.push(id);
+  }
+
+  return { count: ids.length, ids, dates };
 }
 
 export async function fetchShifts() {

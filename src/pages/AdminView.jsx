@@ -6,9 +6,10 @@ import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManag
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
 import BreakPeriodsField from '../components/BreakPeriodsField';
 import TreatmentNotesField from '../components/TreatmentNotesField';
+import RecurrenceFields from '../components/RecurrenceFields';
 import TreatmentTypeFields from '../components/TreatmentTypeFields';
 import { TREATMENT_TYPES } from '../constants/treatmentTypes';
-import { createShiftWithAppointments } from '../utils/shifts';
+import { createShiftsFromForm } from '../utils/shifts';
 
 const ADMIN_PASSWORD = 'carmeli2026';
 const SESSION_KEY = 'carmeli_admin_auth';
@@ -25,6 +26,9 @@ const emptyForm = {
   slotDuration: '30',
   notes: '',
   breaks: [],
+  recurrenceEnabled: false,
+  recurrenceWeekday: 2,
+  recurrenceUntil: '',
 };
 
 function isAuthenticated() {
@@ -84,12 +88,15 @@ export default function AdminView() {
     setSubmitting(true);
     setMessage({ type: '', text: '' });
     try {
-      const shiftId = await createShiftWithAppointments(form);
+      const result = await createShiftsFromForm(form);
       setMessage({
         type: 'success',
-        text: `הטיפול נוצר בהצלחה (${shiftId.slice(0, 8)}…). המשבצות נשמרו ב-Firestore.`,
+        text:
+          result.count === 1
+            ? 'הטיפול נוצר בהצלחה. המשבצות נשמרו ב-Firestore.'
+            : `נוצרו ${result.count} טיפולים מחזוריים (משבצות לכל תאריך).`,
       });
-      setForm(emptyForm);
+      setForm({ ...emptyForm });
       bumpRefresh();
     } catch (err) {
       console.error(err);
@@ -230,7 +237,9 @@ export default function AdminView() {
         />
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">תאריך</span>
+          <span className="mb-1 block text-sm font-medium">
+            {form.recurrenceEnabled ? 'מתאריך (מופע ראשון בטווח)' : 'תאריך'}
+          </span>
           <input
             required
             type="date"
@@ -239,6 +248,15 @@ export default function AdminView() {
             onChange={(e) => setForm({ ...form, date: e.target.value })}
           />
         </label>
+
+        <RecurrenceFields
+          enabled={form.recurrenceEnabled}
+          weekday={form.recurrenceWeekday}
+          untilDate={form.recurrenceUntil}
+          onEnabledChange={(recurrenceEnabled) => setForm({ ...form, recurrenceEnabled })}
+          onWeekdayChange={(recurrenceWeekday) => setForm({ ...form, recurrenceWeekday })}
+          onUntilDateChange={(recurrenceUntil) => setForm({ ...form, recurrenceUntil })}
+        />
 
         <BreakPeriodsField
           breaks={form.breaks}
@@ -288,7 +306,11 @@ export default function AdminView() {
           disabled={submitting}
           className="w-full rounded-xl bg-olive-700 py-3 font-semibold text-white hover:bg-olive-800 disabled:opacity-60"
         >
-          {submitting ? 'יוצר טיפול...' : 'יצירת טיפול ומשבצות'}
+          {submitting
+            ? 'יוצר טיפול...'
+            : form.recurrenceEnabled
+              ? 'יצירת סדרת טיפולים ומשבצות'
+              : 'יצירת טיפול ומשבצות'}
         </button>
       </form>
 
