@@ -62,6 +62,35 @@ export async function fetchAppointments(shiftId) {
   return appointments;
 }
 
+export async function fetchBookedRegistrants() {
+  const shifts = await fetchShifts();
+  const registrants = [];
+
+  await Promise.all(
+    shifts.map(async (shift) => {
+      const appointments = await fetchAppointments(shift.id);
+      appointments.forEach((apt) => {
+        if (apt.status !== 'booked') return;
+        registrants.push({
+          ...apt,
+          shiftId: shift.id,
+          shiftDate: shift.date,
+          doctorName: shift.doctorName,
+          treatmentType: shift.treatmentType,
+        });
+      });
+    }),
+  );
+
+  registrants.sort((a, b) => {
+    const dateCmp = (a.shiftDate || '').localeCompare(b.shiftDate || '');
+    if (dateCmp !== 0) return dateCmp;
+    return (a.startTime || '').localeCompare(b.startTime || '');
+  });
+
+  return registrants;
+}
+
 export async function bookAppointment(shiftId, appointmentId, soldierDetails) {
   const appointmentRef = doc(
     db,

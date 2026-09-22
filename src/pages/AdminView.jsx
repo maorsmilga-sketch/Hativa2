@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
 import { createShiftWithAppointments } from '../utils/shifts';
 
 const ADMIN_PASSWORD = 'carmeli2026';
@@ -37,6 +38,7 @@ export default function AdminView() {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [registrantsRefresh, setRegistrantsRefresh] = useState(0);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -82,6 +84,7 @@ export default function AdminView() {
         text: `משמרת נוצרה בהצלחה (${shiftId.slice(0, 8)}…). המשבצות נשמרו ב-Firestore.`,
       });
       setForm(emptyForm);
+      setRegistrantsRefresh((n) => n + 1);
     } catch (err) {
       console.error(err);
       setMessage({
@@ -247,6 +250,8 @@ export default function AdminView() {
           {submitting ? 'יוצר משמרת...' : 'יצירת משמרת ומשבצות'}
         </button>
       </form>
+
+      <RegistrantsByBattalion refreshToken={registrantsRefresh} />
     </Layout>
   );
 }

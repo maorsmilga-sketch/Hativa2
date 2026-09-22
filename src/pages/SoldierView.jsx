@@ -4,14 +4,7 @@ import StepIndicator from '../components/StepIndicator';
 import { fetchShifts, fetchAppointments, bookAppointment } from '../utils/shifts';
 import { formatHebrewDate } from '../utils/timeSlots';
 
-const BATTALIONS = [
-  'מפח"ט',
-  'גדוד 222',
-  'גדוד 223',
-  'גדוד 221',
-  'גדס"ם',
-  'גדוד 224',
-];
+import { BATTALIONS } from '../constants/battalions';
 
 const emptyRegistrationForm = () => ({
   personalNumber: '',
