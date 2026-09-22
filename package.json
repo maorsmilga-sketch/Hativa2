@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "generate:og": "node scripts/generate-og-image.mjs",
+    "build": "npm run generate:og && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "sharp": "^0.34.1",
     "@tailwindcss/vite": "^4.1.4",
     "@vitejs/plugin-react": "^4.4.1",
     "tailwindcss": "^4.1.4",
