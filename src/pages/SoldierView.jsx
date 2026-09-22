@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderScheduleChangeNotice from '../components/HeaderScheduleChangeNotice';
 import Layout from '../components/Layout';
@@ -13,7 +13,7 @@ import { formatBreaksSummary } from '../utils/breaks';
 import { formatHebrewDate } from '../utils/timeSlots';
 
 import { BATTALIONS } from '../constants/battalions';
-import { displayTreatmentType } from '../constants/treatmentTypes';
+import { groupShiftsByTreatmentDomain } from '../utils/treatmentGroups';
 
 const emptyRegistrationForm = () => ({
   personalNumber: '',
@@ -100,6 +100,8 @@ export default function SoldierView() {
     }
   };
 
+  const groupedShifts = useMemo(() => groupShiftsByTreatmentDomain(shifts), [shifts]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedShift || !selectedSlot) return;
@@ -168,60 +170,87 @@ export default function SoldierView() {
                 אין טיפולים פתוחים כרגע. מנהל המערכת צריך לפרסם טיפולים לפני שניתן להירשם.
               </p>
               <p className="text-sm text-olive-600">
-                לחצו למטה על <strong className="font-semibold">«כניסת מנהל»</strong> כדי
-                להוסיף טיפול חדש, או רעננו את הרשימה אחרי שהטיפולים פורסמו.
+                רעננו את הרשימה אחרי שהטיפולים פורסמו, או פנו למנהל המערכת.
               </p>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {shifts.map((shift) => {
-                const full = shift.isFull;
+            <div className="space-y-3">
+              {groupedShifts.map(({ label, shifts: groupShifts }) => {
+                const openSlots = groupShifts.filter((s) => !s.isFull).length;
                 return (
-                  <li key={shift.id}>
-                    <button
-                      type="button"
-                      disabled={full}
-                      onClick={() => handleSelectShift(shift)}
-                      className={`w-full rounded-xl border p-4 text-right shadow-sm transition ${
-                        full
-                          ? 'cursor-not-allowed border-olive-200 bg-olive-100 opacity-90'
-                          : 'border-olive-200 bg-white hover:border-olive-500 hover:shadow-md active:scale-[0.99]'
-                      }`}
-                    >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="font-semibold text-olive-900">
-                          {formatHebrewDate(shift.date)}
-                        </p>
-                        {full ? (
-                          <span className="shrink-0 rounded-full bg-olive-600 px-2 py-0.5 text-xs font-medium text-white">
-                            מלא
-                          </span>
-                        ) : (
-                          <span className="shrink-0 text-xs font-medium text-olive-600">
-                            {shift.availableSlots} משבצות פנויות
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-olive-700">{shift.doctorName}</p>
-                      <p className="text-sm text-olive-600">
-                        {displayTreatmentType(shift.treatmentType)}
-                      </p>
-                      {shift.location ? (
-                        <p className="mt-1 text-xs text-olive-600">מיקום: {shift.location}</p>
-                      ) : null}
-                      <p className="mt-2 text-xs text-olive-500">
-                        {shift.startTime} – {shift.endTime}
-                      </p>
-                      {shift.notes ? (
-                        <p className="mt-2 line-clamp-2 text-xs text-olive-600">
-                          {shift.notes}
-                        </p>
-                      ) : null}
-                    </button>
-                  </li>
+                  <details
+                    key={label}
+                    className="group rounded-xl border border-olive-200 bg-olive-50/60 shadow-sm"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+                      <span className="text-sm font-semibold text-olive-900 sm:text-base">
+                        {label}
+                      </span>
+                      <span className="flex items-center gap-2 text-xs text-olive-600">
+                        <span className="rounded-full bg-olive-200/80 px-2 py-0.5 font-medium text-olive-800">
+                          {groupShifts.length} {groupShifts.length === 1 ? 'טיפול' : 'טיפולים'}
+                          {openSlots > 0 ? ` · ${openSlots} פנוי` : ''}
+                        </span>
+                        <span
+                          className="text-olive-500 transition-transform group-open:rotate-180"
+                          aria-hidden
+                        >
+                          ▾
+                        </span>
+                      </span>
+                    </summary>
+                    <ul className="space-y-3 border-t border-olive-200 bg-white p-3 pt-2">
+                      {groupShifts.map((shift) => {
+                        const full = shift.isFull;
+                        return (
+                          <li key={shift.id}>
+                            <button
+                              type="button"
+                              disabled={full}
+                              onClick={() => handleSelectShift(shift)}
+                              className={`w-full rounded-xl border p-4 text-right shadow-sm transition ${
+                                full
+                                  ? 'cursor-not-allowed border-olive-200 bg-olive-100 opacity-90'
+                                  : 'border-olive-200 bg-white hover:border-olive-500 hover:shadow-md active:scale-[0.99]'
+                              }`}
+                            >
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <p className="font-semibold text-olive-900">
+                                  {formatHebrewDate(shift.date)}
+                                </p>
+                                {full ? (
+                                  <span className="shrink-0 rounded-full bg-olive-600 px-2 py-0.5 text-xs font-medium text-white">
+                                    מלא
+                                  </span>
+                                ) : (
+                                  <span className="shrink-0 text-xs font-medium text-olive-600">
+                                    {shift.availableSlots} משבצות פנויות
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1 text-olive-700">{shift.doctorName}</p>
+                              {shift.location ? (
+                                <p className="mt-1 text-xs text-olive-600">
+                                  מיקום: {shift.location}
+                                </p>
+                              ) : null}
+                              <p className="mt-2 text-xs text-olive-500">
+                                {shift.startTime} – {shift.endTime}
+                              </p>
+                              {shift.notes ? (
+                                <p className="mt-2 line-clamp-2 text-xs text-olive-600">
+                                  {shift.notes}
+                                </p>
+                              ) : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
                 );
               })}
-            </ul>
+            </div>
           )}
         </section>
       )}
