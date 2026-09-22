@@ -9,6 +9,7 @@ import {
   runTransaction,
   updateDoc,
   deleteDoc,
+  deleteField,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { resolveTreatmentType } from '../constants/treatmentTypes';
@@ -221,6 +222,55 @@ export async function fetchBookedRegistrants() {
   });
 
   return registrants;
+}
+
+export async function updateBookedAppointment(shiftId, appointmentId, soldierDetails) {
+  const appointmentRef = doc(
+    db,
+    SHIFTS_COLLECTION,
+    shiftId,
+    'appointments',
+    appointmentId,
+  );
+
+  try {
+    await updateDoc(appointmentRef, {
+      status: 'booked',
+      personalNumber: soldierDetails.personalNumber,
+      idNumber: soldierDetails.idNumber,
+      battalion: soldierDetails.battalion,
+      fullName: soldierDetails.fullName,
+      phone: soldierDetails.phone,
+      email: soldierDetails.email || '',
+    });
+  } catch (err) {
+    throw new Error(formatFirestoreError(err));
+  }
+}
+
+export async function cancelBookedAppointment(shiftId, appointmentId) {
+  const appointmentRef = doc(
+    db,
+    SHIFTS_COLLECTION,
+    shiftId,
+    'appointments',
+    appointmentId,
+  );
+
+  try {
+    await updateDoc(appointmentRef, {
+      status: 'available',
+      personalNumber: deleteField(),
+      idNumber: deleteField(),
+      battalion: deleteField(),
+      fullName: deleteField(),
+      phone: deleteField(),
+      email: deleteField(),
+      bookedAt: deleteField(),
+    });
+  } catch (err) {
+    throw new Error(formatFirestoreError(err));
+  }
 }
 
 export async function bookAppointment(shiftId, appointmentId, soldierDetails) {

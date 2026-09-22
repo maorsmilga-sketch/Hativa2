@@ -20,6 +20,15 @@ service cloud.firestore {
         && (!('breaks' in data) || data.breaks is list);
     }
 
+    function isSoldierRegistration(data) {
+      return data.personalNumber is string
+        && data.idNumber is string
+        && data.battalion is string
+        && data.fullName is string
+        && data.phone is string
+        && data.email is string;
+    }
+
     match /shifts/{shiftId} {
       allow read: if true;
       allow create: if isValidShift(request.resource.data);
@@ -33,19 +42,25 @@ service cloud.firestore {
           && request.resource.data.startTime is string
           && request.resource.data.endTime is string;
         allow delete: if true;
-        allow update: if resource.data.status == 'available'
-          && request.resource.data.status == 'booked'
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly([
-                'status', 'personalNumber', 'idNumber', 'battalion',
-                'fullName', 'phone', 'email', 'bookedAt'
-              ])
-          && request.resource.data.personalNumber is string
-          && request.resource.data.idNumber is string
-          && request.resource.data.battalion is string
-          && request.resource.data.fullName is string
-          && request.resource.data.phone is string
-          && request.resource.data.email is string;
+        allow update: if
+          (resource.data.status == 'available'
+            && request.resource.data.status == 'booked'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly([
+                  'status', 'personalNumber', 'idNumber', 'battalion',
+                  'fullName', 'phone', 'email', 'bookedAt'
+                ])
+            && isSoldierRegistration(request.resource.data))
+          || (resource.data.status == 'booked'
+            && request.resource.data.status == 'booked'
+            && request.resource.data.startTime == resource.data.startTime
+            && request.resource.data.endTime == resource.data.endTime
+            && isSoldierRegistration(request.resource.data))
+          || (resource.data.status == 'booked'
+            && request.resource.data.status == 'available'
+            && request.resource.data.startTime == resource.data.startTime
+            && request.resource.data.endTime == resource.data.endTime
+            && request.resource.data.keys().hasOnly(['startTime', 'endTime', 'status']));
       }
     }
   }

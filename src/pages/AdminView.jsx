@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ManageTreatments from '../components/ManageTreatments';
+import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManager';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
 import BreakPeriodsField from '../components/BreakPeriodsField';
 import TreatmentNotesField from '../components/TreatmentNotesField';
@@ -112,6 +113,11 @@ export default function AdminView() {
         type: 'success',
         text: 'פרטי הטיפול הועתקו ללוח — ניתן להדביק ב-WhatsApp',
       });
+      return;
+    }
+    if (result?.registrantsUpdated) {
+      bumpRefresh();
+      setMessage({ type: 'success', text: 'רשימת הנרשמים עודכנה.' });
       return;
     }
     if (result?.shared === 'registrants-copied') {
@@ -287,6 +293,11 @@ export default function AdminView() {
       </form>
 
       <ManageTreatments refreshToken={treatmentsRefresh} onUpdated={handleTreatmentUpdated} />
+
+      <TreatmentRegistrantsManager
+        refreshToken={registrantsRefresh}
+        onChanged={handleTreatmentUpdated}
+      />
 
       <RegistrantsByBattalion
         refreshToken={registrantsRefresh}
