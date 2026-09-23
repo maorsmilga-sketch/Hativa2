@@ -9,13 +9,13 @@ export default function StepIndicator({ currentStep, onStepClick }) {
         const done = stepNum < currentStep;
         const canNavigate = done && typeof onStepClick === 'function';
 
-        const className = `flex-1 rounded-lg border px-2 py-2.5 text-center text-xs font-medium transition ${
+        const className = `flex-1 rounded-full border px-2 py-3 text-center text-xs font-bold transition sm:text-sm ${
           active
-            ? 'border-olive-700 bg-olive-700 text-white shadow-sm'
+            ? 'border-olive-900 bg-olive-900 text-white shadow-sm'
             : done
               ? 'border-olive-500 bg-olive-100 text-olive-900'
-              : 'border-dashed border-olive-200 bg-olive-50/80 text-olive-400'
-        } ${canNavigate ? 'cursor-pointer hover:bg-olive-200 active:scale-[0.98]' : ''}`;
+              : 'border-dashed border-olive-200 bg-white text-olive-400'
+        } ${canNavigate ? 'cursor-pointer hover:bg-olive-50 active:scale-[0.98]' : ''}`;
 
         if (canNavigate) {
           return (

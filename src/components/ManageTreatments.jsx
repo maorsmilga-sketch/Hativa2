@@ -338,7 +338,7 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex-1 rounded-xl bg-olive-700 py-2.5 text-sm font-semibold text-white hover:bg-olive-800 disabled:opacity-60"
+                      className="flex-1 btn-primary btn-primary-block text-sm disabled:opacity-60"
                     >
                       {saving ? 'שומר...' : 'שמירת שינויים'}
                     </button>

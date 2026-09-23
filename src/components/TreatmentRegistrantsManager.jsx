@@ -301,7 +301,7 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
                     <button
                       type="submit"
                       disabled={savingId === apt.id}
-                      className="flex-1 rounded-xl bg-olive-700 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                      className="flex-1 btn-primary text-sm disabled:opacity-60"
                     >
                       {savingId === apt.id ? 'שומר...' : 'שמירה'}
                     </button>

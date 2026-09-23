@@ -16,12 +16,12 @@ export default function HeaderScheduleChangeNotice() {
   }
 
   return (
-    <p className="mx-auto mt-2 max-w-[18rem] text-[11px] leading-snug text-sky-100/95 sm:max-w-none sm:text-xs">
+    <p className="mx-auto max-w-6xl text-center text-[11px] leading-snug text-olive-800 sm:text-xs">
       בכל בקשה או שינוי תור שכבר נקבע — להתקשר לחמ&quot;ל חטיבה:{' '}
       <button
         type="button"
         onClick={handleCopyPhone}
-        className="inline font-semibold text-amber-300 underline decoration-amber-400/70 underline-offset-2 transition-colors hover:text-amber-200 active:text-amber-100"
+        className="font-bold text-olive-700 underline decoration-olive-300 underline-offset-2 hover:text-olive-900"
         aria-label={`העתקת מספר ${BRIGADE_PHONE_DISPLAY}`}
       >
         {copied ? 'הועתק!' : `טלפון: ${BRIGADE_PHONE_DISPLAY}`}

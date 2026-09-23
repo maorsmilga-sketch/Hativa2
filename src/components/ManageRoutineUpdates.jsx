@@ -200,7 +200,7 @@ export default function ManageRoutineUpdates({ refreshToken = 0, onChanged }) {
                     <button
                       type="submit"
                       disabled={savingId === item.id}
-                      className="flex-1 rounded-xl bg-olive-700 py-2 text-sm font-semibold text-white"
+                      className="flex-1 btn-primary text-sm"
                     >
                       {savingId === item.id ? 'שומר...' : 'שמירה'}
                     </button>

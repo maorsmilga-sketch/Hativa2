@@ -19,7 +19,7 @@ npm run dev
 
 ## תצוגה מקדימה ב-WhatsApp (לוגו)
 
-WhatsApp מציג **תצוגה מקדימה של הקישור** לפי תגיות Open Graph. הלוגו מוגדר כ-`og:image` → `public/logo.png`.
+WhatsApp מציג **תצוגה מקדימה של הקישור** לפי תגיות Open Graph. ב-build נוצר `public/og-whatsapp.png` (1200×630, לוגו **מימין**) — `og:image` מצביע אליו.
 
 1. ב-Vercel הוסיפו **Environment Variable**: `VITE_SITE_URL` = כתובת האתר (למשל `https://hativa2.vercel.app`) **בלי** סלאש בסוף.
 2. **Redeploy** (חובה — התגיות נבנות ב-build).

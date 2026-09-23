@@ -281,7 +281,7 @@ export default function AdminView() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-olive-700 py-3 font-semibold text-white hover:bg-olive-800 disabled:opacity-60"
+          className="w-full btn-primary btn-primary-block disabled:opacity-60"
         >
           {submitting
             ? 'יוצר טיפול...'

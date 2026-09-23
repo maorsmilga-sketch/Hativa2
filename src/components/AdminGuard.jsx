@@ -38,7 +38,7 @@ export default function AdminGuard({ children }) {
   if (!user) {
     return (
       <Layout title="כניסת מנהל" subtitle="התחברות מאובטחת — חטיבת כרמלי">
-        <div className="mx-auto max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-md">
+        <div className="card-surface mx-auto max-w-sm space-y-4 p-6">
           <p className="text-sm text-olive-700">
             גישה למנהלים בלבד. התחברו עם חשבון Google מורשה.
           </p>
@@ -62,14 +62,14 @@ export default function AdminGuard({ children }) {
   if (!isAdmin) {
     return (
       <Layout title="אין הרשאה" subtitle="חשבון Google לא מורשה">
-        <div className="mx-auto max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-md text-center">
+        <div className="card-surface mx-auto max-w-sm space-y-4 p-6 text-center">
           <p className="text-sm text-olive-800">
             החשבון <strong>{user.email}</strong> אינו ברשימת המנהלים.
           </p>
           <button
             type="button"
             onClick={signOutAdmin}
-            className="w-full rounded-xl bg-olive-700 py-3 font-semibold text-white"
+            className="btn-primary btn-primary-block"
           >
             התנתקות
           </button>

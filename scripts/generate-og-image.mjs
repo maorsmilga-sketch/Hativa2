@@ -29,14 +29,14 @@ const svg = `
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#3d4530"/>
-      <stop offset="100%" stop-color="#556042"/>
+      <stop offset="0%" stop-color="#07388A"/>
+      <stop offset="100%" stop-color="#0E66C5"/>
     </linearGradient>
   </defs>
   <rect width="100%" height="100%" fill="url(#bg)"/>
-  <text x="80" y="220" fill="#e8ebe0" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="700" direction="rtl">חטיבת כרמלי</text>
-  <text x="80" y="290" fill="#d1d7c1" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="600" direction="rtl">מערכת טיפולים ושיקום</text>
-  <text x="80" y="360" fill="#c5cdb8" font-family="Arial, Helvetica, sans-serif" font-size="26" direction="rtl">הרשמה לטיפולים — לוחמי וחיילי חטיבת כרמלי</text>
+  <text x="80" y="220" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="700" direction="rtl">חטיבת כרמלי</text>
+  <text x="80" y="290" fill="#DDF3FD" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="600" direction="rtl">מערכת טיפולים ושיקום</text>
+  <text x="80" y="360" fill="#DDF3FD" font-family="Arial, Helvetica, sans-serif" font-size="26" direction="rtl">לוח טיפולים מתעדכן — רפואה חטיבת כרמלי</text>
   <image href="${logoDataUrl}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}"/>
 </svg>`;
 

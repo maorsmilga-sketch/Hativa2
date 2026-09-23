@@ -1,25 +1,30 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-olive-50: #f6f7f2;
-  --color-olive-100: #e8ebe0;
-  --color-olive-200: #d1d7c1;
-  --color-olive-300: #b3bd9a;
-  --color-olive-400: #96a074;
-  --color-olive-500: #7a8559;
-  --color-olive-600: #5f6845;
-  --color-olive-700: #4a5236;
-  --color-olive-800: #3d442d;
-  --color-olive-900: #333928;
-  --color-olive-950: #1a1d14;
+  /* Medical palette (olive-* retained for compatibility) */
+  --color-olive-50: #f3f9fd;
+  --color-olive-100: #ddf3fd;
+  --color-olive-200: #b8e4f7;
+  --color-olive-300: #7ecbf0;
+  --color-olive-400: #2192e7;
+  --color-olive-500: #0e66c5;
+  --color-olive-600: #0e66c5;
+  --color-olive-700: #0e66c5;
+  --color-olive-800: #07388a;
+  --color-olive-900: #07388a;
+  --color-olive-950: #052654;
+
+  --font-sans: 'Heebo', system-ui, sans-serif;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
-  background-color: var(--color-olive-50);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  background-color: #ffffff;
+  color: #07388a;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -34,4 +39,130 @@ textarea {
 button:not(:disabled),
 a {
   cursor: pointer;
+}
+
+/* Decorative page background */
+.medical-page-bg {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(circle at 100% 0%, rgb(221 243 253 / 0.65) 0%, transparent 42%),
+    radial-gradient(circle at 0% 100%, rgb(243 249 253 / 0.9) 0%, transparent 38%);
+}
+
+.medical-page-bg::before {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath fill='%2307388A' d='M60 20v80M20 60h80' stroke='%2307388A' stroke-width='8'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+
+.medical-page-content {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #0e66c5;
+  padding: 0.625rem 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgb(7 56 138 / 0.12);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #07388a;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn-primary-block {
+  width: 100%;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.field-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #b8e4f7;
+  background-color: #ffffff;
+  padding: 0.625rem 0.875rem;
+  font-size: 1rem;
+  color: #07388a;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #0e66c5;
+  box-shadow: 0 0 0 3px rgb(14 102 197 / 0.2);
+}
+
+.card-surface {
+  border-radius: 1rem;
+  border: 1px solid #ddf3fd;
+  background-color: #ffffff;
+  box-shadow: 0 4px 14px rgb(7 56 138 / 0.06);
+}
+
+.card-muted {
+  border-radius: 1rem;
+  border: 1px solid #ddf3fd;
+  background-color: #f3f9fd;
+}
+
+.slot-pill {
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid #b8e4f7;
+  background-color: #ffffff;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #07388a;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.slot-pill:hover:not(:disabled) {
+  border-color: #0e66c5;
+  background-color: #ddf3fd;
+}
+
+.slot-pill:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.slot-pill-unavailable {
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.slot-pill-selected {
+  border-color: #07388a;
+  background-color: #07388a;
+  color: #ffffff;
 }
