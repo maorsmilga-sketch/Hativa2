@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderScheduleChangeNotice from '../components/HeaderScheduleChangeNotice';
 import Layout from '../components/Layout';
-import SoldierHero from '../components/SoldierHero';
 import SiteFooter from '../components/SiteFooter';
 import StepIndicator from '../components/StepIndicator';
 import {
@@ -126,10 +125,10 @@ export default function SoldierView() {
 
   return (
     <Layout
-      title="מערכת טיפולים ושיקום"
+      title="רפואה חטיבת כרמלי"
+      subtitle="לוח טיפולים מתעדכן"
       headerNotice={<HeaderScheduleChangeNotice />}
       showAdminLink
-      hero={<SoldierHero />}
     >
       <StepIndicator currentStep={step} onStepClick={handleStepIndicatorClick} />
 
