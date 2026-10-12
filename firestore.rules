@@ -13,7 +13,7 @@ service cloud.firestore {
           'maorsmilga@gmail.com',
           'jmosery@gmail.com',
           'moshevis@gmail.com',
-'gilguralond@gmail.com'
+          'gilguralond@gmail.com'
         ];
     }
 
