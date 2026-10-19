@@ -292,6 +292,7 @@ export async function fetchBookedRegistrants() {
       shiftDate: shift.date,
       doctorName: shift.doctorName,
       treatmentType: shift.treatmentType,
+      location: shift.location || '',
       startTime: pb.startTime || '',
       endTime: pb.endTime || '',
       personalNumber: pb.personalNumber,
@@ -317,6 +318,7 @@ export async function fetchBookedRegistrants() {
           shiftDate: shift.date,
           doctorName: shift.doctorName,
           treatmentType: shift.treatmentType,
+          location: shift.location || '',
         });
       });
     }),

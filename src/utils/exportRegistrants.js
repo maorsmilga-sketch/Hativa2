@@ -18,8 +18,10 @@ function sortForExport(registrants) {
   });
 }
 
-export function downloadRegistrantsExcel(registrants) {
+export function downloadRegistrantsExcel(registrants, options = {}) {
   if (!registrants.length) return;
+
+  const { fileLabel } = options;
 
   const rows = sortForExport(registrants).map((entry) => ({
     גדוד: entry.battalion || UNKNOWN_BATTALION,
@@ -33,6 +35,7 @@ export function downloadRegistrantsExcel(registrants) {
     'שעת סיום': entry.endTime || '',
     'סוג טיפול': entry.treatmentType || '',
     מטפל: entry.doctorName || '',
+    מיקום: entry.location || '',
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -48,11 +51,12 @@ export function downloadRegistrantsExcel(registrants) {
     { wch: 10 },
     { wch: 16 },
     { wch: 18 },
+    { wch: 18 },
   ];
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'נרשמים');
 
-  const dateStamp = new Date().toISOString().slice(0, 10);
+  const dateStamp = fileLabel || new Date().toISOString().slice(0, 10);
   XLSX.writeFile(workbook, `carmeli-nrshamim-${dateStamp}.xlsx`);
 }

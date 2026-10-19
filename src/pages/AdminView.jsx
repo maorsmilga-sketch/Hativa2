@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import ManageRoutineUpdates from '../components/ManageRoutineUpdates';
 import ManageTreatments from '../components/ManageTreatments';
 import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManager';
+import DailyRegistrantsReport from '../components/DailyRegistrantsReport';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
 import BreakPeriodsField from '../components/BreakPeriodsField';
 import TreatmentNotesField from '../components/TreatmentNotesField';
@@ -299,6 +300,8 @@ export default function AdminView() {
         refreshToken={registrantsRefresh}
         onChanged={handleTreatmentUpdated}
       />
+
+      <DailyRegistrantsReport refreshToken={registrantsRefresh} />
 
       <RegistrantsByBattalion
         refreshToken={registrantsRefresh}
