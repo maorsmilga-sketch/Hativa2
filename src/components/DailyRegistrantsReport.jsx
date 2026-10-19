@@ -8,6 +8,27 @@ function sortByTime(entries) {
   return [...entries].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 }
 
+function RegistrantCard({ row }) {
+  return (
+    <article className="rounded-xl border border-olive-100 bg-olive-50/70 p-3 text-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-bold text-olive-900">{row.fullName || '—'}</p>
+        <p className="shrink-0 text-xs font-semibold text-olive-800">
+          {row.startTime}–{row.endTime}
+        </p>
+      </div>
+      <p className="mt-1 text-olive-800">
+        {row.treatmentType || '—'} · {row.doctorName || '—'}
+      </p>
+      {row.location ? <p className="text-olive-700">מיקום: {row.location}</p> : null}
+      <p className="mt-2 text-xs leading-relaxed text-olive-700">
+        {row.battalion || '—'} · מ.א. {row.personalNumber || '—'} · ת.ז. {row.idNumber || '—'}
+      </p>
+      <p className="text-xs text-olive-700">{row.phone || '—'}</p>
+    </article>
+  );
+}
+
 export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   const [registrants, setRegistrants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +53,15 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   useEffect(() => {
     load();
   }, [load, refreshToken]);
+
+  useEffect(() => {
+    if (!modalOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [modalOpen]);
 
   const forSelectedDay = useMemo(
     () => sortByTime(registrants.filter((r) => r.shiftDate === selectedDate)),
@@ -63,8 +93,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   const closeModal = () => setModalOpen(false);
 
   const handleShowToday = () => {
-    const today = getIsraelLocalDateString();
-    setSelectedDate(today);
+    setSelectedDate(getIsraelLocalDateString());
     setModalOpen(true);
   };
 
@@ -81,10 +110,10 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   };
 
   return (
-    <section className="card-surface mt-8 space-y-4 p-4 sm:p-5">
+    <section id="admin-daily" className="card-surface scroll-mt-20 space-y-4 p-4 sm:p-5">
       <h2 className="text-lg font-bold text-olive-900">דוח יומי — נרשמים לפי תאריך</h2>
       <p className="text-sm text-olive-800">
-        בחרו תאריך ורופא/מטפל (אופציונלי), הציגו טבלה או ייצאו לאקסל לפני ההורדה.
+        בחרו תאריך ורופא/מטפל, הציגו רשימה או ייצאו לאקסל.
       </p>
 
       {error ? (
@@ -93,8 +122,8 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="block min-w-[10rem] flex-1">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
           <span className="mb-1 block text-sm font-semibold text-olive-900">תאריך</span>
           <input
             type="date"
@@ -106,7 +135,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             }}
           />
         </label>
-        <label className="block min-w-[10rem] flex-1">
+        <label className="block">
           <span className="mb-1 block text-sm font-semibold text-olive-900">רופא / מטפל</span>
           <select
             className="field-input"
@@ -122,21 +151,20 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             ))}
           </select>
         </label>
-        <button
-          type="button"
-          onClick={() => setSelectedDate(getIsraelLocalDateString())}
-          className="rounded-full border border-olive-200 bg-white px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50"
-        >
-          קפיצה להיום
-        </button>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <p className="text-sm text-olive-700">
+        {isToday ? 'היום' : formatHebrewDate(selectedDate)} ·{' '}
+        <strong>{filteredRows.length}</strong> נרשמים
+        {selectedDoctor ? <span className="text-olive-600"> · {selectedDoctor}</span> : null}
+      </p>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           disabled={loading}
           onClick={handleShowToday}
-          className="btn-primary text-sm"
+          className="btn-primary btn-primary-block text-sm"
         >
           הצג טיפולים להיום
         </button>
@@ -144,39 +172,30 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
           type="button"
           disabled={loading}
           onClick={handleShowSelectedDay}
-          className="rounded-full border border-olive-500 bg-white px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50 disabled:opacity-60"
+          className="min-h-11 w-full rounded-full border border-olive-500 bg-white px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50 disabled:opacity-60"
         >
-          הצג טיפולים ליום שנבחר
+          הצג יום שנבחר
         </button>
         <button
           type="button"
           disabled={loading || filteredRows.length === 0}
           onClick={handleExportDay}
-          className="rounded-full border border-olive-500 bg-olive-100 px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50 disabled:opacity-60"
+          className="min-h-11 w-full rounded-full border border-olive-500 bg-olive-100 px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50 disabled:opacity-60"
         >
           ייצוא לאקסל ({filteredRows.length})
         </button>
         <button
           type="button"
-          onClick={load}
-          disabled={loading}
-          className="rounded-full border border-olive-200 px-4 py-2.5 text-sm font-bold text-olive-800 disabled:opacity-60"
+          onClick={() => setSelectedDate(getIsraelLocalDateString())}
+          className="min-h-11 w-full rounded-full border border-olive-200 bg-white px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50"
         >
-          {loading ? 'טוען...' : 'רענון נתונים'}
+          קפיצה להיום
         </button>
       </div>
 
-      <p className="text-sm text-olive-700">
-        {isToday ? 'היום' : formatHebrewDate(selectedDate)} ·{' '}
-        <strong>{filteredRows.length}</strong> נרשמים
-        {selectedDoctor ? (
-          <span className="text-olive-600"> · מסונן: {selectedDoctor}</span>
-        ) : null}
-      </p>
-
       {modalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-olive-950/40 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 bg-olive-950/50"
           role="presentation"
           onClick={closeModal}
         >
@@ -184,82 +203,99 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="daily-report-title"
-            className="flex max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
+            className="flex h-dvh w-full flex-col bg-white sm:mx-auto sm:mt-6 sm:mb-6 sm:h-auto sm:max-h-[88dvh] sm:max-w-3xl sm:rounded-2xl sm:shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3 border-b border-olive-100 px-4 py-4 sm:px-6">
-              <div>
-                <h3 id="daily-report-title" className="text-lg font-bold text-olive-900">
-                  טיפולים ליום {formatHebrewDate(selectedDate)}
-                </h3>
-                <p className="mt-1 text-sm text-olive-700">
-                  {filteredRows.length} נרשמים · {selectedDate}
-                  {selectedDoctor ? ` · ${selectedDoctor}` : ''}
-                </p>
+            <div className="shrink-0 border-b border-olive-100 px-4 py-3 sm:px-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 id="daily-report-title" className="text-base font-bold leading-snug text-olive-900 sm:text-lg">
+                    טיפולים ליום {formatHebrewDate(selectedDate)}
+                  </h3>
+                  <p className="mt-1 text-sm text-olive-700">
+                    {filteredRows.length} נרשמים
+                    {selectedDoctor ? ` · ${selectedDoctor}` : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="shrink-0 rounded-full border border-olive-200 px-3 py-1.5 text-sm font-bold text-olive-800"
+                >
+                  סגירה
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="rounded-full border border-olive-200 px-3 py-1 text-sm font-bold text-olive-800"
-              >
-                סגירה
-              </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-auto px-2 py-3 sm:px-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-5">
               {filteredRows.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-olive-600">
                   אין נרשמים לתאריך זה.
                 </p>
               ) : (
-                <table className="w-full min-w-[640px] border-collapse text-right text-sm">
-                  <thead>
-                    <tr className="border-b border-olive-200 bg-olive-50 text-xs font-bold text-olive-900">
-                      <th className="px-2 py-2">שעה</th>
-                      <th className="px-2 py-2">שם</th>
-                      <th className="px-2 py-2">גדוד</th>
-                      <th className="px-2 py-2">מ.א.</th>
-                      <th className="px-2 py-2">ת.ז.</th>
-                      <th className="px-2 py-2">טלפון</th>
-                      <th className="px-2 py-2">טיפול</th>
-                      <th className="px-2 py-2">מטפל</th>
-                      <th className="px-2 py-2">מיקום</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  <ul className="space-y-2 sm:hidden">
                     {filteredRows.map((row) => (
-                      <tr
-                        key={`${row.shiftId}-${row.id}`}
-                        className="border-b border-olive-100 align-top"
-                      >
-                        <td className="whitespace-nowrap px-2 py-2 font-semibold text-olive-900">
-                          {row.startTime}–{row.endTime}
-                        </td>
-                        <td className="px-2 py-2 font-medium">{row.fullName || '—'}</td>
-                        <td className="px-2 py-2">{row.battalion || '—'}</td>
-                        <td className="px-2 py-2">{row.personalNumber || '—'}</td>
-                        <td className="px-2 py-2">{row.idNumber || '—'}</td>
-                        <td className="whitespace-nowrap px-2 py-2">{row.phone || '—'}</td>
-                        <td className="px-2 py-2">{row.treatmentType || '—'}</td>
-                        <td className="px-2 py-2">{row.doctorName || '—'}</td>
-                        <td className="px-2 py-2">{row.location || '—'}</td>
-                      </tr>
+                      <li key={`${row.shiftId}-${row.id}`}>
+                        <RegistrantCard row={row} />
+                      </li>
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                  <div className="hidden overflow-x-auto sm:block">
+                    <table className="w-full border-collapse text-right text-sm">
+                      <thead>
+                        <tr className="sticky top-0 border-b border-olive-200 bg-olive-50 text-xs font-bold text-olive-900">
+                          <th className="px-2 py-2">שעה</th>
+                          <th className="px-2 py-2">שם</th>
+                          <th className="px-2 py-2">גדוד</th>
+                          <th className="px-2 py-2">מ.א.</th>
+                          <th className="px-2 py-2">ת.ז.</th>
+                          <th className="px-2 py-2">טלפון</th>
+                          <th className="px-2 py-2">טיפול</th>
+                          <th className="px-2 py-2">מטפל</th>
+                          <th className="px-2 py-2">מיקום</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredRows.map((row) => (
+                          <tr
+                            key={`${row.shiftId}-${row.id}`}
+                            className="border-b border-olive-100 align-top"
+                          >
+                            <td className="whitespace-nowrap px-2 py-2 font-semibold text-olive-900">
+                              {row.startTime}–{row.endTime}
+                            </td>
+                            <td className="px-2 py-2 font-medium">{row.fullName || '—'}</td>
+                            <td className="px-2 py-2">{row.battalion || '—'}</td>
+                            <td className="px-2 py-2">{row.personalNumber || '—'}</td>
+                            <td className="px-2 py-2">{row.idNumber || '—'}</td>
+                            <td className="whitespace-nowrap px-2 py-2">{row.phone || '—'}</td>
+                            <td className="px-2 py-2">{row.treatmentType || '—'}</td>
+                            <td className="px-2 py-2">{row.doctorName || '—'}</td>
+                            <td className="px-2 py-2">{row.location || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 border-t border-olive-100 px-4 py-3 sm:px-6">
+            <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-olive-100 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
               <button
                 type="button"
                 disabled={filteredRows.length === 0}
                 onClick={handleExportDay}
-                className="btn-primary text-sm disabled:opacity-60"
+                className="btn-primary btn-primary-block text-sm disabled:opacity-60"
               >
                 ייצוא לאקסל
               </button>
-              <button type="button" onClick={closeModal} className="rounded-full border border-olive-200 px-4 py-2 text-sm font-bold">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="min-h-11 w-full rounded-full border border-olive-200 px-4 py-2 text-sm font-bold"
+              >
                 סגירה
               </button>
             </div>

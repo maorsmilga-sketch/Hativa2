@@ -155,7 +155,7 @@ export default function TreatmentRegistrantsManager({ refreshToken = 0, onChange
   };
 
   return (
-    <section className="mt-8 space-y-4">
+    <section id="admin-registrants" className="mt-8 scroll-mt-20 space-y-4">
       <h2 className="text-lg font-semibold text-olive-800">ניהול נרשמים לפי טיפול</h2>
       <p className="text-sm text-olive-600">
         בחרו תחום ואז טיפול ספציפי, צפו בנרשמים וערכו או הסירו רישום.

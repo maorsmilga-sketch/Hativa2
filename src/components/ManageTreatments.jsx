@@ -167,7 +167,7 @@ export default function ManageTreatments({ refreshToken = 0, onUpdated }) {
   const groupedShifts = useMemo(() => groupShiftsByTreatmentDomain(shifts), [shifts]);
 
   return (
-    <section className="mt-8 space-y-4">
+    <section id="admin-manage-treatments" className="mt-8 scroll-mt-20 space-y-4">
       <h2 className="text-lg font-semibold text-olive-800">עריכת טיפולים קיימים</h2>
 
       {error ? (

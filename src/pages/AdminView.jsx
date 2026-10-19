@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import ManageRoutineUpdates from '../components/ManageRoutineUpdates';
 import ManageTreatments from '../components/ManageTreatments';
 import TreatmentRegistrantsManager from '../components/TreatmentRegistrantsManager';
+import AdminNav from '../components/AdminNav';
 import DailyRegistrantsReport from '../components/DailyRegistrantsReport';
 import RegistrantsByBattalion from '../components/RegistrantsByBattalion';
 import BreakPeriodsField from '../components/BreakPeriodsField';
@@ -138,26 +139,32 @@ export default function AdminView() {
   return (
     <AdminGuard>
       <Layout title="לוח בקרה — מנהל" subtitle="יצירה ועריכת טיפולים">
-      <div className="mb-4 flex flex-wrap gap-2">
+      <AdminNav />
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button
           type="button"
           onClick={handleShare}
-          className="flex-1 rounded-xl border border-olive-600 bg-white px-4 py-2.5 text-sm font-semibold text-olive-800 hover:bg-olive-50"
+          className="min-h-11 rounded-xl border border-olive-600 bg-white px-3 py-2.5 text-sm font-semibold text-olive-800 hover:bg-olive-50 sm:flex-1"
         >
-          שיתוף קישור להרשמה
+          שיתוף קישור
         </button>
         <Link
           to="/"
-          className="rounded-xl bg-olive-100 px-4 py-2.5 text-sm font-medium text-olive-800"
+          className="flex min-h-11 items-center justify-center rounded-xl bg-olive-100 px-3 py-2.5 text-sm font-medium text-olive-800"
         >
           דף חיילים
         </Link>
         <button
           type="button"
           onClick={signOutAdmin}
-          className="rounded-xl border border-olive-300 px-4 py-2.5 text-sm font-medium text-olive-800"
+          className="col-span-2 min-h-11 rounded-xl border border-olive-300 px-3 py-2.5 text-sm font-medium text-olive-800"
         >
-          התנתקות{user?.email ? ` (${user.email})` : ''}
+          התנתקות
+          {user?.email ? (
+            <span className="mt-0.5 block truncate text-[11px] font-normal text-olive-600">
+              {user.email}
+            </span>
+          ) : null}
         </button>
       </div>
 
@@ -174,9 +181,12 @@ export default function AdminView() {
         </div>
       ) : null}
 
+      <DailyRegistrantsReport refreshToken={registrantsRefresh} />
+
       <form
+        id="admin-new-treatment"
         onSubmit={handleCreateShift}
-        className="space-y-4 rounded-xl bg-white p-4 shadow-sm"
+        className="card-surface mt-6 scroll-mt-20 space-y-4 p-4"
       >
         <h2 className="text-lg font-semibold text-olive-800">טיפול חדש</h2>
 
@@ -292,8 +302,6 @@ export default function AdminView() {
         </button>
       </form>
 
-      <ManageRoutineUpdates refreshToken={treatmentsRefresh} onChanged={handleTreatmentUpdated} />
-
       <ManageTreatments refreshToken={treatmentsRefresh} onUpdated={handleTreatmentUpdated} />
 
       <TreatmentRegistrantsManager
@@ -301,7 +309,7 @@ export default function AdminView() {
         onChanged={handleTreatmentUpdated}
       />
 
-      <DailyRegistrantsReport refreshToken={registrantsRefresh} />
+      <ManageRoutineUpdates refreshToken={treatmentsRefresh} onChanged={handleTreatmentUpdated} />
 
       <RegistrantsByBattalion
         refreshToken={registrantsRefresh}

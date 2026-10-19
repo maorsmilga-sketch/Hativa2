@@ -112,7 +112,7 @@ export default function ManageRoutineUpdates({ refreshToken = 0, onChanged }) {
   };
 
   return (
-    <section className="mt-8 space-y-4">
+    <section id="admin-routine" className="mt-8 scroll-mt-20 space-y-4">
       <h2 className="text-lg font-semibold text-olive-800">רפואת שגרה — עדכונים לחיילים</h2>
       <p className="text-sm text-olive-600">
         התוכן מוצג בדף «רפואת שגרה — עדכונים» באפליקציית החיילים.

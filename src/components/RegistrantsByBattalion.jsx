@@ -74,15 +74,15 @@ export default function RegistrantsByBattalion({ refreshToken = 0, onShareResult
   };
 
   return (
-    <section className="mt-8 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <section id="admin-battalion" className="mt-8 scroll-mt-20 space-y-4">
+      <div className="space-y-3">
         <h2 className="text-lg font-semibold text-olive-800">נרשמים לפי גדוד</h2>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={handleShareRegistrants}
             disabled={loading || registrants.length === 0}
-            className="rounded-lg border border-olive-600 bg-white px-3 py-1.5 text-sm font-medium text-olive-900 hover:bg-olive-50 disabled:opacity-60"
+            className="min-h-11 rounded-lg border border-olive-600 bg-white px-3 py-2 text-sm font-medium text-olive-900 hover:bg-olive-50 disabled:opacity-60"
           >
             שיתוף רשימה
           </button>
@@ -90,7 +90,7 @@ export default function RegistrantsByBattalion({ refreshToken = 0, onShareResult
             type="button"
             onClick={() => downloadRegistrantsExcel(registrants)}
             disabled={loading || registrants.length === 0}
-            className="rounded-lg bg-olive-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-olive-800 disabled:opacity-60"
+            className="min-h-11 rounded-lg bg-olive-700 px-3 py-2 text-sm font-medium text-white hover:bg-olive-800 disabled:opacity-60"
           >
             ייצוא לאקסל
           </button>
@@ -98,7 +98,7 @@ export default function RegistrantsByBattalion({ refreshToken = 0, onShareResult
             type="button"
             onClick={load}
             disabled={loading}
-            className="rounded-lg border border-olive-300 bg-white px-3 py-1.5 text-sm font-medium text-olive-800 hover:bg-olive-50 disabled:opacity-60"
+            className="col-span-2 min-h-11 rounded-lg border border-olive-300 bg-white px-3 py-2 text-sm font-medium text-olive-800 hover:bg-olive-50 disabled:opacity-60 sm:col-span-1"
           >
             {loading ? 'טוען...' : 'רענון'}
           </button>
