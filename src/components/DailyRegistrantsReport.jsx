@@ -13,6 +13,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => getIsraelLocalDateString());
+  const [selectedDoctor, setSelectedDoctor] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -37,9 +38,28 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
     [registrants, selectedDate],
   );
 
+  const doctorsForDay = useMemo(() => {
+    const names = new Set();
+    forSelectedDay.forEach((r) => {
+      const name = (r.doctorName || '').trim();
+      if (name) names.add(name);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b, 'he'));
+  }, [forSelectedDay]);
+
+  const filteredRows = useMemo(() => {
+    if (!selectedDoctor) return forSelectedDay;
+    return forSelectedDay.filter((r) => r.doctorName === selectedDoctor);
+  }, [forSelectedDay, selectedDoctor]);
+
+  useEffect(() => {
+    if (selectedDoctor && !doctorsForDay.includes(selectedDoctor)) {
+      setSelectedDoctor('');
+    }
+  }, [selectedDoctor, doctorsForDay]);
+
   const isToday = selectedDate === getIsraelLocalDateString();
 
-  const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
 
   const handleShowToday = () => {
@@ -53,15 +73,18 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
   };
 
   const handleExportDay = () => {
-    if (forSelectedDay.length === 0) return;
-    downloadRegistrantsExcel(forSelectedDay, { fileLabel: selectedDate });
+    if (filteredRows.length === 0) return;
+    const doctorSuffix = selectedDoctor
+      ? `-${selectedDoctor.replace(/\s+/g, '-').slice(0, 24)}`
+      : '';
+    downloadRegistrantsExcel(filteredRows, { fileLabel: `${selectedDate}${doctorSuffix}` });
   };
 
   return (
     <section className="card-surface mt-8 space-y-4 p-4 sm:p-5">
       <h2 className="text-lg font-bold text-olive-900">דוח יומי — נרשמים לפי תאריך</h2>
       <p className="text-sm text-olive-800">
-        בחרו תאריך, הציגו טבלה מלאה או ייצאו לאקסל את כל הנרשמים לאותו יום.
+        בחרו תאריך ורופא/מטפל (אופציונלי), הציגו טבלה או ייצאו לאקסל לפני ההורדה.
       </p>
 
       {error ? (
@@ -77,8 +100,27 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             type="date"
             className="field-input"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+              setSelectedDoctor('');
+            }}
           />
+        </label>
+        <label className="block min-w-[10rem] flex-1">
+          <span className="mb-1 block text-sm font-semibold text-olive-900">רופא / מטפל</span>
+          <select
+            className="field-input"
+            value={selectedDoctor}
+            onChange={(e) => setSelectedDoctor(e.target.value)}
+            disabled={loading || forSelectedDay.length === 0}
+          >
+            <option value="">כל הרופאים ביום זה</option>
+            {doctorsForDay.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
         </label>
         <button
           type="button"
@@ -108,11 +150,11 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
         </button>
         <button
           type="button"
-          disabled={loading || forSelectedDay.length === 0}
+          disabled={loading || filteredRows.length === 0}
           onClick={handleExportDay}
           className="rounded-full border border-olive-500 bg-olive-100 px-4 py-2.5 text-sm font-bold text-olive-900 hover:bg-olive-50 disabled:opacity-60"
         >
-          ייצוא לאקסל ({forSelectedDay.length})
+          ייצוא לאקסל ({filteredRows.length})
         </button>
         <button
           type="button"
@@ -126,7 +168,10 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
 
       <p className="text-sm text-olive-700">
         {isToday ? 'היום' : formatHebrewDate(selectedDate)} ·{' '}
-        <strong>{forSelectedDay.length}</strong> נרשמים
+        <strong>{filteredRows.length}</strong> נרשמים
+        {selectedDoctor ? (
+          <span className="text-olive-600"> · מסונן: {selectedDoctor}</span>
+        ) : null}
       </p>
 
       {modalOpen ? (
@@ -148,7 +193,8 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
                   טיפולים ליום {formatHebrewDate(selectedDate)}
                 </h3>
                 <p className="mt-1 text-sm text-olive-700">
-                  {forSelectedDay.length} נרשמים · {selectedDate}
+                  {filteredRows.length} נרשמים · {selectedDate}
+                  {selectedDoctor ? ` · ${selectedDoctor}` : ''}
                 </p>
               </div>
               <button
@@ -161,7 +207,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto px-2 py-3 sm:px-4">
-              {forSelectedDay.length === 0 ? (
+              {filteredRows.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-olive-600">
                   אין נרשמים לתאריך זה.
                 </p>
@@ -181,7 +227,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {forSelectedDay.map((row) => (
+                    {filteredRows.map((row) => (
                       <tr
                         key={`${row.shiftId}-${row.id}`}
                         className="border-b border-olive-100 align-top"
@@ -207,7 +253,7 @@ export default function DailyRegistrantsReport({ refreshToken = 0 }) {
             <div className="flex flex-wrap gap-2 border-t border-olive-100 px-4 py-3 sm:px-6">
               <button
                 type="button"
-                disabled={forSelectedDay.length === 0}
+                disabled={filteredRows.length === 0}
                 onClick={handleExportDay}
                 className="btn-primary text-sm disabled:opacity-60"
               >
